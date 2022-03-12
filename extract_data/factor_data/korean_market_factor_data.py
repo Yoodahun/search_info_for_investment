@@ -27,8 +27,12 @@ class KoreanMarketFactorData:
         print(result.head(2))
         return result
 
-    def get_etf_market_data(self):
-        pass
+    # def get_etf_market_data(self):
+    #     etf_list = self.__get_korea_etf_ticker_and_name(self.__get_date())
+    #     etf_fund = self.stock.get_etf_price_deviation(self.__get_date(), self.__get_date(),"309210")
+    #     #
+    #     # result = pd.merge(etf_list, stock_fund, left_on="종목코드", right_on="종목코드")
+    #     print(etf_fund)
 
     def __get_korean_stock_ticker_and_name(self, date, market):
         stock_list = pd.DataFrame({'종목코드': self.stock.get_market_ticker_list(date, market=market)})
@@ -43,6 +47,14 @@ class KoreanMarketFactorData:
         stock_fud.rename(columns={'티커': '종목코드'}, inplace=True)
 
         return stock_fud
+
+    def __get_korea_etf_ticker_and_name(self, date):
+        etf_list = pd.DataFrame({'종목코드': self.stock.get_etf_ticker_list(date)})
+        etf_list['종목명'] = etf_list['종목코드'].map(lambda x: stock.get_etf_ticker_name(x))
+
+        return etf_list
+
+
 
     def __get_date(self):
         """
