@@ -54,8 +54,6 @@ class KoreanMarketFactorData:
 
         return etf_list
 
-
-
     def __get_date(self):
         """
         :return yesterday
