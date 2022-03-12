@@ -9,7 +9,7 @@ KRX = fdr.StockListing("KRX")
 
 print_kospi = KRX[KRX['Symbol'].isin(KOSPI_LIST.KOSPI_MARKET_TICKER_LIST.keys())]
 print_kosdaq = KRX[KRX['Symbol'].isin(KOSDAQ_LIST.KOSDAQ_MARKET_TICKER_LIST.keys())]
-print_etf = KRX[KRX['Symbol'].isin(ETF_LIST.ETF_TICKER_LIST.keys())]
+# print_etf = KRX[KRX['Symbol'].isin(ETF_LIST.ETF_TICKER_LIST.keys())]
 
 print_kospi.to_csv(save_file_path + 'KOSPI_list.csv'
                    , encoding="cp949"
@@ -17,6 +17,8 @@ print_kospi.to_csv(save_file_path + 'KOSPI_list.csv'
 print_kosdaq.to_csv(save_file_path + 'KOSDAQ_list.csv'
                     , encoding="cp949"
                     )
-print_etf.to_csv(save_file_path + 'KOREA_ETF_list.csv'
+
+KRX = fdr.StockListing("ETF/KR")
+KRX.to_csv(save_file_path + 'KOREA_ETF_list_other.csv'
                  , encoding="cp949"
                  )
