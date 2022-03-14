@@ -56,11 +56,20 @@ class KoreanMarketFactorData:
 
     def __get_date(self):
         """
-        :return yesterday
+        :return weekdays
         :return:
         """
-        date = datetime.datetime.now() - datetime.timedelta(days=1)
-        return date.strftime("%Y%m%d")
+        # date = datetime.datetime.now() - datetime.timedelta(days=1)
+        today = datetime.datetime.today()
+        check_date = today.weekday()
+        if check_date == 5:
+            today -= datetime.timedelta(days=1)
+        elif check_date == 6:
+            today -= datetime.timedelta(days=2)
+        elif check_date == 0:
+            today -= datetime.timedelta(days=3)
+
+        return today.strftime("%Y%m%d")
 
     def __get_fundamental_data(self, market):
         """
