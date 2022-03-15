@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .factor_data.korean_market_factor_data import KoreanMarketFactorData
+from .basic_factor_data.korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
 from config.api_key import OPEN_DART_KEY
 from const.market import KOREA_MARKET
@@ -20,13 +20,17 @@ report_code = {
 }
 
 indicators = [
+    '유동자산',
     '자산총계',
     '부채총계',
     '자본총계',
     '매출액',
+    '매출총이익',
     '영업이익',
     '당기순이익',
+    '영업활동현금흐름', '잉여현금흐름'
 ]
+
 
 
 class Extract:
@@ -75,7 +79,7 @@ class Extract:
 
         for row in df.itertuples():
             print(f"extracting {row[2]}...")
-            for year in [2018, 2021]:
+            for year in [2020, 2021]:
                 dt = self.__find_financial_indicator(row[1], year, indicators, dart)
                 data += dt
 
@@ -123,9 +127,8 @@ class Extract:
         return df
 
     def __find_financial_indicator(self, stock_name, year, indicators, dart):
-        report = dart.finstate(stock_name, year)
-        # print(report['fs_nm'])
-        print(report['account_nm']=='매출원가')
+        report = dart.finstate_all(stock_name, year)
+
         data = []
         record = []
         if report is None: #리포트가 없다면
@@ -165,7 +168,7 @@ class Extract:
     def __calculate_indicator(self, df_finance):
         df_finance.sort_values(by = ['종목코드', '연도'], inplace=True, ascending=False)
         ## 부채 비율
-        df_finance['부채비율'] = df_finance['자본총계'] / df_finance['자산총계'] * 100
+        df_finance['부채비율'] = df_finance['부채총계'] / df_finance['자본총계'] * 100
 
         ###영업이익 / 매출액 / 당기순이익 증가율
         print(df_finance['영업이익'].iloc[0:])

@@ -1,7 +1,7 @@
 import datetime
 
 from extract_data.extract import Extract
-from extract_data.factor_data import korean_market_factor_data
+from extract_data.basic_factor_data import korean_market_factor_data
 
 # test1 = korean_market_factor_data.KoreanMarketFactorData()
 
