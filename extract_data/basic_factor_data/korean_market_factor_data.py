@@ -79,11 +79,12 @@ class KoreanMarketFactorData:
         today = self.__get_date()
 
         stock_list = self.__get_korean_stock_ticker_and_name(today, market)
-        stock_market_cap = self.stock.get_market_cap(today)
+        # stock_market_cap = self.stock.get_market_cap(today)
         stock_fundamental = self.__get_korean_stock_fundamental(today, market)
 
-        stock_list = pd.merge(stock_list, stock_market_cap, left_on="종목코드", right_on="티커")
-        stock_list.drop(['종가', '거래량', '거래대금', '상장주식수'], axis=1)
+        # stock_list = pd.merge(stock_list, stock_market_cap, left_on="종목코드", right_on="티커")
+        # stock_list = stock_list.drop(['종가', '거래량', '거래대금', '상장주식수'], axis=1)
+
 
         # 종목 코드로 조인
         return pd.merge(stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
