@@ -60,16 +60,32 @@ class KoreanMarketFactorData:
         """
         # date = datetime.datetime.now() - datetime.timedelta(days=1)
         today = datetime.datetime.today()
-        # check_date = today.weekday()
-        # if check_date == 5:
-        #     today -= datetime.timedelta(days=1)
-        # elif check_date == 6:
-        #     today -= datetime.timedelta(days=2)
-        # elif check_date == 0:
-        #     today -= datetime.timedelta(days=3)
+        year = str(today.year)
+        month = str(today.month)
+        date = int(today.day)
 
-        # return today.strftime("%Y%m%d")
-        return "20220314"
+        date_formated = datetime.strptime(today, "%Y%m%d")  # datetime format 으로 변환
+
+        if date_formated.weekday() == 5:
+            if month == '12':
+                date -= 2  # 연말의 경우 2일을 뺀다.
+            else:
+                date -= 1  # 토요일일 경우 1일을 뺀다.
+        elif date_formated.weekday() == 6:
+            if month == '12':
+                date -= 3  # 연말의 경우 3일을 뺀다.
+            else:
+                date -= 2  # 일요일일 경우 2일을 뺀다.
+        elif date_formated.weekday() == 4 and year == '12':
+            date -= 1  # 연말인데 금요일이면 1일을 뺀다.
+
+            # 추석에 대한 처리
+        if month == '09' and year == '2020':
+            date -= 1
+        elif month == '09' and year == '2023':
+            date -= 3
+
+        return year + month + str(date)
 
     def __get_fundamental_data(self, market):
         """
@@ -79,15 +95,18 @@ class KoreanMarketFactorData:
         today = self.__get_date()
 
         stock_list = self.__get_korean_stock_ticker_and_name(today, market)
-        # stock_market_cap = self.stock.get_market_cap(today)
         stock_fundamental = self.__get_korean_stock_fundamental(today, market)
-
-        # stock_list = pd.merge(stock_list, stock_market_cap, left_on="종목코드", right_on="티커")
-        # stock_list = stock_list.drop(['종가', '거래량', '거래대금', '상장주식수'], axis=1)
-
 
         # 종목 코드로 조인
         return pd.merge(stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
+
+    def __get_fundamental_data_market_cap(self):
+        today = self.__get_date()
+
+        stock_list = self.stock.get_market_cap(today)
+
+        return stock_list
+
 
 
 

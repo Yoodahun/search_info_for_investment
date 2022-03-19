@@ -10,8 +10,8 @@ from const.market import KOREA_MARKET
 import pandas as pd
 
 condition = {
-    'PBR': 1.3,
-    'PER': 10,
+    'PBR': 1.0,
+    'PER': 8,
     'DIV': 5.0
 }
 
@@ -53,18 +53,20 @@ class Extract:
         :return:
         """
 
-        df = self.__get_data(self.factor_data, market)
+        df = self.__get_data(market)
+
         pbr_condition = df['PBR'] <= condition["PBR"]
         per_condition = df['PER'] <= condition["PER"]
-        # df = df[pbr_condition & per_condition]
-        df = df.drop(["PER", "PBR"], axis=1)
-
-        # df = self.__join_finance_data(df)
-        df = self.__join_finance_data(df[df["종목명"] == "삼성전자"])
+        df = df[pbr_condition & per_condition]
+        # df = df.drop(["PER", "PBR"], axis=1)
+        print(f"Filtered {len(df)} companies")
+        df.sort_values(by=['PER', 'PBR'])
+        df = self.__join_finance_data(df)
+        # df = self.__join_finance_data(df[df["종목명"] == "삼성전자"])
 
         # print(df)
 
-        return df.sort_values(by=['종목코드', '연도', "PBR", "PER"], ascending=False)
+        return df.sort_values(by=['PER','PBR','종목코드', '연도',])
 
     def filter_high_div_and_dps(self, market):
         """
@@ -81,23 +83,24 @@ class Extract:
             df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
 
     def __join_finance_data(self, df):
-        print(df)
+        pd.set_option('display.max_columns', None)
+
+        # print(df)
         dart = OpenDartReader(OPEN_DART_KEY)
         pd.options.display.float_format = '{:.2f}'.format
-        pd.set_option('display.max_columns', None)
 
         data = []
         # print(df)
 
         for row in df.itertuples():
             print(f"extracting {row[2]}...")
-            for year in [2019, 2020, 2021]:
+            for year in [2020, 2021]:
                 dt = self.__find_financial_indicator(row[1], year, dart)
                 data += dt
 
             time.sleep(0.3)
 
-        print(data)
+        # print(data)
         df_financial = pd.DataFrame(data, columns=financial_column_header)
         df_financial.drop_duplicates(inplace=True)
         # for indicator in indicators:
@@ -107,7 +110,7 @@ class Extract:
 
         df_financial = self.__calculate_indicator(df_financial)
         # df_financial = df_financial.drop(['시가총액'], axis=1)
-
+        print("Join Data------------")
         return pd.merge(df, df_financial, left_on="종목코드", right_on="종목코드", how="outer")
 
     def __join_dividend_data(self, df):
@@ -129,12 +132,12 @@ class Extract:
 
         return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
 
-    def __get_data(self, factor_data, market):
+    def __get_data(self, market):
         df = pd.DataFrame()
         if "KOSPI" == KOREA_MARKET[market]:
-            df = factor_data.get_kospi_market_data()
+            df = self.factor_data.get_kospi_market_data()
         elif "KOSDAQ" == KOREA_MARKET[market]:
-            df = factor_data.get_kosdaq_market_data()
+            df = self.factor_data.get_kosdaq_market_data()
 
         df = df.replace([0], np.nan)
         df = df.dropna(axis=0)
@@ -154,10 +157,11 @@ class Extract:
         cfi = [0, 0, 0, 0]  # 투자활동현금흐름
         fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 편의상 영업활동 - 투자활동 현금흐름으로 계산
         market_cap = [0, 0, 0, 0]
+        market_listed_shares = [0, 0, 0, 0]
         date_year = str(year)  # 년도 변수 지정
 
         nogp_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
-                    '112040', '259960', '032640', '180640', '058850'] # 매출총이익 계산 못하는 회사들
+                     '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
 
         data = []
         record = []
@@ -210,7 +214,8 @@ class Extract:
 
                 income[j] = self.__check_index_error(report, condition6)
                 if stock_name == '008600':
-                    net_income[j] = self.__get_condition_value(report, CONDITION.get_condition12(report))-self.__get_condition_value(report, CONDITION.get_condition13(report))
+                    net_income[j] = self.__get_condition_value(report, CONDITION.get_condition12(
+                        report)) - self.__get_condition_value(report, CONDITION.get_condition13(report))
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
 
@@ -251,6 +256,7 @@ class Extract:
                 fcf[j] = (cfo[j] - cfi[j])
                 market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_name)
                 market_cap[j] = market_cap_df.loc[path_string]["시가총액"]
+                # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
                 record = [stock_name, path_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
@@ -259,76 +265,98 @@ class Extract:
             data.append(record)
         return data
 
-    def __calculate_indicator(self, df_finance):
-        df_finance.sort_values(by=['종목코드', '연도'], inplace=True, ascending=False)
+    def __calculate_indicator(self, df):
+        df.sort_values(by=['종목코드', '연도'], inplace=True)
+        print(df)
+        df['PER'] = np.nan
+        df['PBR'] = np.nan
+        df['PSR'] = np.nan
+        df['GP/A'] = np.nan
+        df['POR'] = np.nan
+        df['PCR'] = np.nan
+        df['PFCR'] = np.nan
+        df['NCAV/MK'] = np.nan
 
-        df_finance['PER'] = np.nan
-        df_finance['PBR'] = np.nan
-        df_finance['PSR'] = np.nan
-        df_finance['GP/A'] = np.nan
-        df_finance['POR'] = np.nan
-        df_finance['PCR'] = np.nan
-        df_finance['PFCR'] = np.nan
-        df_finance['NCAV/MK'] = np.nan
-
-        for i in range(3, len(df_finance)):
-            print(df_finance.iloc[i])
-            df_finance.loc[[i], ["PER"]] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
-                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
-            df_finance.loc[[i], ["PBR"]] = df_finance.iloc[i]['시가총액'] / df_finance.iloc[i]['부채총계']
-            df_finance.loc[[i], ["PSR"]] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
-                        df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
-            df_finance.loc[[i], ["GP/A"]] = (df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
-                                             df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익']) / \
-                                            df_finance.iloc[i]['자산총계']
-            df_finance.loc[[i], ["POR"]] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['영업이익'] + df_finance.iloc[i - 2]['영업이익'] +
-                        df_finance.iloc[i - 1]['영업이익'] + df_finance.iloc[i]['영업이익'])
-            df_finance.loc[[i], ["PCR"]] = df_finance.iloc[i]['시가총액'] / (
-                    df_finance.iloc[i - 3]['영업활동현금흐름'] + df_finance.iloc[i - 2]['영업활동현금흐름'] +
-                    df_finance.iloc[i - 1]['영업활동현금흐름'] + df_finance.iloc[i]['영업활동현금흐름'])
-            df_finance.loc[[i], ["PFCR"]] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
-                        df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
-            df_finance.loc[[i], ["NCAV/MK"]] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
-                                               df_finance.iloc[i]['시가총액']
-
-        ## 부채 비율
-        df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
-
-        ###영업이익 / 매출액 / 당기순이익 증가율
-        df_finance['영업이익 증가율'] = (df_finance['영업이익'].diff(periods=-1) / df_finance['영업이익'].shift(-1)).fillna(0) * 100
-        df_finance['매출액 증가율'] = (df_finance['매출액'].diff(periods=-1) / df_finance['매출액'].shift(-1)).fillna(0) * 100
-        df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff(periods=-1) / df_finance['당기순이익'].shift(-1)).fillna(0) * 100
-
-        ###영업이익 / 매출액 / 당기순이익 증가 상태
         status = ['영업이익 상태', '매출액 상태', '당기순이익 상태']
         three_indicators = ['영업이익', '매출액', '당기순이익']
 
-        for i in range(len(status)):
-            df_finance[status[i]] = np.nan
-            df_finance.loc[
-                (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
-                status[i]
-            ] = "흑자 지속"
-            df_finance.loc[
-                (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
-                status[i]
-            ] = "적자 지속"
-            df_finance.loc[
-                (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
-                status[i]
-            ] = "흑자 전환"
-            df_finance.loc[
-                (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
-                status[i]
-            ] = "적자 전환"
+        df_temp = pd.DataFrame(columns=df.columns)
+
+        corp_ticker = df.loc[:,["종목코드"]].drop_duplicates().values.tolist()
+
+        for row in corp_ticker:
+            if row is None:
+                continue
+            print(f"Calculating {row[0]} factor indicators" )
+            df_finance = df[df["종목코드"] == row[0]].reset_index()
+
+            # print(df_finance)
+
+            for i in range(3, len(df_finance)):
+                # print(df_finance)
+                # print(df_finance.iloc[i])
+                df_finance.loc[i,"PER"] = df_finance.iloc[i]['시가총액'] / (
+                            df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
+                            df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
+                df_finance.loc[i, "PBR"] = df_finance.iloc[i]['시가총액'] / df_finance.iloc[i]['부채총계']
+                df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
+                            df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
+                            df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
+                df_finance.loc[i, "GP/A"] = (df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
+                                                 df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익']) / \
+                                                df_finance.iloc[i]['자산총계']
+                df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
+                            df_finance.iloc[i - 3]['영업이익'] + df_finance.iloc[i - 2]['영업이익'] +
+                            df_finance.iloc[i - 1]['영업이익'] + df_finance.iloc[i]['영업이익'])
+                df_finance.loc[i, "PCR"] = df_finance.iloc[i]['시가총액'] / (
+                        df_finance.iloc[i - 3]['영업활동현금흐름'] + df_finance.iloc[i - 2]['영업활동현금흐름'] +
+                        df_finance.iloc[i - 1]['영업활동현금흐름'] + df_finance.iloc[i]['영업활동현금흐름'])
+                df_finance.loc[i, "PFCR"] = df_finance.iloc[i]['시가총액'] / (
+                            df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
+                            df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
+                df_finance.loc[i, "NCAV/MK"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
+                                                   df_finance.iloc[i]['시가총액']
+
+            # df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
+            ## 부채 비율
+            df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
+
+            ###영업이익 / 매출액 / 당기순이익 증가율
+            df_finance['영업이익 증가율'] = (df_finance['영업이익'].diff() / df_finance['영업이익'].shift(1)).fillna(
+                0) * 100
+            df_finance['매출액 증가율'] = (df_finance['매출액'].diff() / df_finance['매출액'].shift(1)).fillna(0) * 100
+            df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
+                0) * 100
+
+            df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
+
+            for i in range(len(status)):
+                df_finance[status[i]] = np.nan
+
+                df_finance.loc[
+                    (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
+                    status[i]
+                ] = "흑자 지속"
+                df_finance.loc[
+                    (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
+                    status[i]
+                ] = "적자 지속"
+                df_finance.loc[
+                    (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
+                    status[i]
+                ] = "흑자 전환"
+                df_finance.loc[
+                    (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
+                    status[i]
+                ] = "적자 전환"
+
+            # print("-------------")
+            # print(df_temp)
+            df_temp = pd.concat([df_finance, df_temp])
 
         ### reindexing columns and return
-        return df_finance.reindex(
-            columns=['종목코드', '연도', 'PER', 'PBR', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR', 'NCAV/MK']
+        return df_temp.reindex(
+            columns=['종목코드', '연도', '시가총액', 'PER', 'PBR', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR', 'NCAV/MK']
                     + indicators
                     + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
         )
@@ -390,5 +418,3 @@ class Extract:
             return 1
         except ValueError:
             return 1
-
-
