@@ -59,12 +59,12 @@ class KoreanMarketFactorData:
         :return:
         """
         # date = datetime.datetime.now() - datetime.timedelta(days=1)
-        today = datetime.datetime.today()
-        year = str(today.year)
-        month = str(today.month)
-        date = int(today.day)
+        today = datetime.datetime.today().strftime("%Y%m%d")
+        year = str(datetime.datetime.today().year)
+        month = str(datetime.datetime.today().month)
+        date = int(datetime.datetime.today().day)
 
-        date_formated = datetime.strptime(today, "%Y%m%d")  # datetime format 으로 변환
+        date_formated = datetime.datetime.strptime(today, "%Y%m%d")  # datetime format 으로 변환
 
         if date_formated.weekday() == 5:
             if month == '12':
