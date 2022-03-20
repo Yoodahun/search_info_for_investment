@@ -43,17 +43,17 @@ class Extract:
 
     def __init__(self):
         self.factor_data = KoreanMarketFactorData()
-        pass
+        self.dart = OpenDartReader(OPEN_DART_KEY)  # config/api_key.py에서 api key의 설정이 필요함.
 
-    def filter_low_pbr_and_per(self, market):
+    def filter_low_pbr_and_per(self, df):
         """
-        pbr under 1.5
-        per under 20
+        pbr under
+        per under
         :param market:
-        :return:
+        :return: Dataframe sorted by PER, PBR, 종목코드, 연도
         """
 
-        df = self.__get_data(market)
+        print("Start extracting filter_low_PER and low_PBR")
 
         pbr_condition = df['PBR'] <= condition["PBR"]
         per_condition = df['PER'] <= condition["PER"]
@@ -66,7 +66,7 @@ class Extract:
 
         # print(df)
 
-        return df.sort_values(by=['PER','PBR','종목코드', '연도',])
+        return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'])
 
     def filter_high_div_and_dps(self, market):
         """
@@ -74,9 +74,8 @@ class Extract:
         :param market:
         :return:
         """
-        factor_data = KoreanMarketFactorData()
 
-        df = self.__get_data(factor_data, market)
+        df = self.__get_data(market)
         div_condition = df['DIV'] >= condition["DIV"]
 
         return self.__join_dividend_data(
@@ -86,7 +85,6 @@ class Extract:
         pd.set_option('display.max_columns', None)
 
         # print(df)
-        dart = OpenDartReader(OPEN_DART_KEY)
         pd.options.display.float_format = '{:.2f}'.format
 
         data = []
@@ -95,7 +93,7 @@ class Extract:
         for row in df.itertuples():
             print(f"extracting {row[2]}...")
             for year in [2020, 2021]:
-                dt = self.__find_financial_indicator(row[1], year, dart)
+                dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
             time.sleep(0.3)
@@ -103,8 +101,6 @@ class Extract:
         # print(data)
         df_financial = pd.DataFrame(data, columns=financial_column_header)
         df_financial.drop_duplicates(inplace=True)
-        # for indicator in indicators:
-        #     df_financial[indicator] = df_financial[indicator].apply(self.__str_to_float)
 
         # print(df_financial)
 
@@ -123,7 +119,7 @@ class Extract:
             record = [row[1]]
             for year in [2020]:
                 # 지정한 해의 전전기, 전기, 당기 3년치.
-                lwfr_dividends, frmtrm_dividends, thstrm_dividends = self.__find_dividends(row[1], year, dart)
+                lwfr_dividends, frmtrm_dividends, thstrm_dividends = self.__find_dividends(row[1], year)
                 record += [lwfr_dividends, frmtrm_dividends, thstrm_dividends]
             data.append(record)
             time.sleep(0.3)
@@ -132,7 +128,7 @@ class Extract:
 
         return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
 
-    def __get_data(self, market):
+    def get_data(self, market):
         df = pd.DataFrame()
         if "KOSPI" == KOREA_MARKET[market]:
             df = self.factor_data.get_kospi_market_data()
@@ -144,7 +140,7 @@ class Extract:
 
         return df
 
-    def __find_financial_indicator(self, stock_name, year, dart):
+    def __find_financial_indicator(self, stock_name, year):
         current_assets = [0, 0, 0, 0]  # 유동자산
         liabilities = [0, 0, 0, 0]  # 부채총계
         equity = [0, 0, 0, 0]  # 자본총계
@@ -167,7 +163,7 @@ class Extract:
         record = []
 
         for j, report_name in enumerate(report_code):
-            report = dart.finstate_all(stock_name, year, report_name, fs_div='CFS')
+            report = self.dart.finstate_all(stock_name, year, report_name, fs_div='CFS')
 
             if report is None:  # 리포트가 없다면
                 pass
@@ -268,8 +264,8 @@ class Extract:
     def __calculate_indicator(self, df):
         df.sort_values(by=['종목코드', '연도'], inplace=True)
         print(df)
-        df['PER'] = np.nan
-        df['PBR'] = np.nan
+        df['PER_quarterly'] = np.nan
+        df['PBR_quarterly'] = np.nan
         df['PSR'] = np.nan
         df['GP/A'] = np.nan
         df['POR'] = np.nan
@@ -282,12 +278,12 @@ class Extract:
 
         df_temp = pd.DataFrame(columns=df.columns)
 
-        corp_ticker = df.loc[:,["종목코드"]].drop_duplicates().values.tolist()
+        corp_ticker = df.loc[:, ["종목코드"]].drop_duplicates().values.tolist()
 
         for row in corp_ticker:
             if row is None:
                 continue
-            print(f"Calculating {row[0]} factor indicators" )
+            print(f"Calculating {row[0]} factor indicators")
             df_finance = df[df["종목코드"] == row[0]].reset_index()
 
             # print(df_finance)
@@ -295,29 +291,45 @@ class Extract:
             for i in range(3, len(df_finance)):
                 # print(df_finance)
                 # print(df_finance.iloc[i])
-                df_finance.loc[i,"PER"] = df_finance.iloc[i]['시가총액'] / (
-                            df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
-                            df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
-                df_finance.loc[i, "PBR"] = df_finance.iloc[i]['시가총액'] / df_finance.iloc[i]['부채총계']
+
+                # PER : 시가총액 / 당기 순이익
+
+                df_finance.loc[i, "PER_quarterly"] = df_finance.iloc[i]['시가총액'] / (
+                        df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
+                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
+
+                # PBR : 시가총액 / 부채총계
+                df_finance.loc[i, "PBR_quarterly"] = df_finance.iloc[i]['시가총액'] / df_finance.iloc[i]['부채총계']
+
+                # PSR : 시가총액 / 매출액
                 df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
-                            df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
-                            df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
+                        df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
+                        df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
+
+                # GP/A : 매출총이익 / 자산총계
                 df_finance.loc[i, "GP/A"] = (df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
-                                                 df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익']) / \
-                                                df_finance.iloc[i]['자산총계']
+                                             df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익']) / \
+                                            df_finance.iloc[i]['자산총계']
+
+                # POR : 시가총액 / 영업이익
                 df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
-                            df_finance.iloc[i - 3]['영업이익'] + df_finance.iloc[i - 2]['영업이익'] +
-                            df_finance.iloc[i - 1]['영업이익'] + df_finance.iloc[i]['영업이익'])
+                        df_finance.iloc[i - 3]['영업이익'] + df_finance.iloc[i - 2]['영업이익'] +
+                        df_finance.iloc[i - 1]['영업이익'] + df_finance.iloc[i]['영업이익'])
+
+                # PCR : 시가총액 / 영업활동 현금흐름
                 df_finance.loc[i, "PCR"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['영업활동현금흐름'] + df_finance.iloc[i - 2]['영업활동현금흐름'] +
                         df_finance.iloc[i - 1]['영업활동현금흐름'] + df_finance.iloc[i]['영업활동현금흐름'])
-                df_finance.loc[i, "PFCR"] = df_finance.iloc[i]['시가총액'] / (
-                            df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
-                            df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
-                df_finance.loc[i, "NCAV/MK"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
-                                                   df_finance.iloc[i]['시가총액']
 
-            # df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
+                # PFCR : 시가총액 / 잉여현금 흐름
+                df_finance.loc[i, "PFCR"] = df_finance.iloc[i]['시가총액'] / (
+                        df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
+                        df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
+
+                # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
+                df_finance.loc[i, "NCAV/MK"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
+                                               df_finance.iloc[i]['시가총액']
+
             ## 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
 
@@ -330,39 +342,39 @@ class Extract:
 
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
 
+            ## 영업이익, 매출액, 당기순이익 확인 지표
             for i in range(len(status)):
                 df_finance[status[i]] = np.nan
-
                 df_finance.loc[
-                    (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
-                    status[i]
-                ] = "흑자 지속"
-                df_finance.loc[
-                    (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
-                    status[i]
-                ] = "적자 지속"
-                df_finance.loc[
-                    (df_finance[three_indicators[i]].iloc[0:] > 0) & (df_finance[three_indicators[i]].iloc[:-1] <= 0),
+                    (df_finance[three_indicators[i]] > 0) & (df_finance[three_indicators[i]].shift(-1) <= 0),
                     status[i]
                 ] = "흑자 전환"
                 df_finance.loc[
-                    (df_finance[three_indicators[i]].iloc[0:] <= 0) & (df_finance[three_indicators[i]].iloc[:-1] > 0),
+                    (df_finance[three_indicators[i]] <= 0) & (df_finance[three_indicators[i]].shift(-1) > 0),
                     status[i]
                 ] = "적자 전환"
+                df_finance.loc[
+                    (df_finance[three_indicators[i]] > 0) & (df_finance[three_indicators[i]].shift(-1) > 0),
+                    status[i]
+                ] = "흑자 지속"
+                df_finance.loc[
+                    (df_finance[three_indicators[i]] <= 0) & (df_finance[three_indicators[i]].shift(-1) <= 0),
+                    status[i]
+                ] = "적자 지속"
 
-            # print("-------------")
-            # print(df_temp)
+            ## 기존 데이터프레임 하단에 종목별로 정제데이터들을 붙이기.
             df_temp = pd.concat([df_finance, df_temp])
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액', 'PER', 'PBR', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR', 'NCAV/MK']
+            columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR',
+                     'NCAV/MK']
                     + indicators
                     + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
         )
 
-    def __find_dividends(self, stock_name, year, dart):
-        stock_name_report = dart.report(stock_name, "배당", year, report_code["사업보고서"])
+    def __find_dividends(self, stock_name, year):
+        stock_name_report = self.dart.report(stock_name, "배당", year, report_code["사업보고서"])
         if stock_name_report is None:
             return np.nan, np.nan, np.nan
         else:
@@ -375,6 +387,11 @@ class Extract:
             return lwfr_dividends, frmtrm_dividends, thstrm_dividends
 
     def __str_to_float(self, value):
+        """
+        문자열로된 숫자를 소수점으로 변환.
+        :param value:
+        :return: float or integer
+        """
         if type(value) is float:
             return value
         elif value == '-':
@@ -383,10 +400,22 @@ class Extract:
             return int(value.replace(',', ''))
 
     def __get_condition_value(self, report, condition):
-
+        """
+        해당 보고서의 해당 row의 당기금액
+        :param report:
+        :param condition:
+        :return: integer
+        """
         return int(report.loc[condition].iloc[0]['thstrm_amount'])
 
     def __check_weekend(self, date_year, date_month, date_day):
+        """
+        주말인지 아닌지를 판단.
+        :param date_year:
+        :param date_month:
+        :param date_day:
+        :return:
+        """
         date = date_year + date_month + str(date_day)
         date_formated = datetime.strptime(date, "%Y%m%d")  # datetime format 으로 변환
 
@@ -412,6 +441,12 @@ class Extract:
         return date_day
 
     def __check_index_error(self, report, condition):
+        """
+        간혹가다가 리포트에서 값을 조회할 수 없는 회사들이 있음. 이럴때는 해당 컬럼값에 그냥 1을 넣어주기로 에러 핸들링.
+        :param report:
+        :param condition:
+        :return:
+        """
         try:
             return self.__get_condition_value(report, condition)
         except IndexError:
