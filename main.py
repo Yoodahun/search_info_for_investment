@@ -1,10 +1,7 @@
 import datetime
 import time
-import openpyxl
-from pykrx import stock
-import pandas as pd
-
 from extract_data.extract import Extract
+from export_data import ExportToData
 from extract_data.basic_factor_data import korean_market_factor_data
 
 # test1 = korean_market_factor_data.KoreanMarketFactorData()
@@ -21,19 +18,22 @@ from extract_data.basic_factor_data import korean_market_factor_data
 #
 
 
-
 start = time.time()
 extractor = Extract()
+exporter = ExportToData()
 # test3 = extractor.filter_high_div_and_dps("KOSPI")
-test3 = extractor.filter_low_pbr_and_per(market="KOSPI")
-test3.to_excel("/Users/yoodahun/Documents/Dahun Document/Investment information/test4_excel_file.xlsx", encoding="cp949"
-                   )
+LOW_PBR_AND_PER = extractor.filter_low_pbr_and_per(extractor.get_data("KOSPI"))
+
+exporter.export_to_excel_with_many_sheets(
+    "/Users/yoodahun/Documents/Dahun Document/Investment information/test5_excel_file.xlsx",
+    [LOW_PBR_AND_PER]
+)
+
 end = time.time()
-sec =(end - start)
+sec = (end - start)
 
 result_list = str(datetime.timedelta(seconds=sec)).split(".")
-print(result_list[0])
-
+print(f"Total extracting time : {result_list[0]} ---------------------")
 
 # print(test3.head(10))
 
