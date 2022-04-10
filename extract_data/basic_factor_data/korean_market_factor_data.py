@@ -1,13 +1,14 @@
 import datetime
 import pandas as pd
+import FinanceDataReader as fdr
 
 from pykrx import stock
-from const.sector import SYMBOL_SECTOR_DIC
 
 
 class KoreanMarketFactorData:
     def __init__(self):
         self.stock = stock
+        self.fdr_data = fdr.StockListing("KRX")
 
     def get_kospi_market_data(self):
         """
@@ -23,7 +24,6 @@ class KoreanMarketFactorData:
         :return: Pandas.DataFrame
         """
         result = self.__get_fundamental_data("KOSDAQ")
-        print(result.head(2))
         return result
 
     # def get_etf_market_data(self):
@@ -33,10 +33,36 @@ class KoreanMarketFactorData:
     #     # result = pd.merge(etf_list, stock_fund, left_on="종목코드", right_on="종목코드")
     #     print(etf_fund)
 
+    def __get_fundamental_data(self, market):
+        """
+         종목코드, 종목명, 업종,  BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
+         :return: Pandas.DataFrame
+         """
+        today = self.__get_date()
+
+        stock_list = self.__get_korean_stock_ticker_and_name(today, market)
+        stock_cap = self.__get_fundamental_data_market_cap(today)
+
+        stock_list = pd.merge(stock_list, stock_cap, left_on="종목코드", right_on="종목코드")
+        stock_fundamental = self.__get_korean_stock_fundamental(today, market)
+
+        # 종목 코드로 조인
+        return pd.merge(stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
+
+    def __get_fundamental_data_market_cap(self, today):
+
+        stock_list = self.stock.get_market_cap(today)
+        stock_list = stock_list.reset_index()
+        stock_list.rename(columns={'티커': '종목코드'}, inplace=True)
+
+        return stock_list
+
+
     def __get_korean_stock_ticker_and_name(self, date, market):
         stock_list = pd.DataFrame({'종목코드': self.stock.get_market_ticker_list(date, market=market)})
         stock_list['종목명'] = stock_list['종목코드'].map(lambda x: stock.get_market_ticker_name(x))
-        stock_list['업종'] = stock_list['종목코드'].map(lambda x: SYMBOL_SECTOR_DIC[x])
+        stock_list['업종'] = stock_list['종목명'].map(lambda x: self.fdr_data[self.fdr_data["Name"]==x]["Sector"].iloc[0])
+        # stock_list['업종'] = stock_list['종목코드'].map(lambda x: SYMBOL_SECTOR_DIC[x])
 
         return stock_list
 
@@ -60,8 +86,8 @@ class KoreanMarketFactorData:
         """
         # date = datetime.datetime.now() - datetime.timedelta(days=1)
         today = datetime.datetime.today().strftime("%Y%m%d")
-        year = str(datetime.datetime.today().year)
-        month = str(datetime.datetime.today().month)
+        year = str(datetime.datetime.today().strftime("%Y"))
+        month = str(datetime.datetime.today().strftime("%m"))
         date = int(datetime.datetime.today().day)
 
         date_formated = datetime.datetime.strptime(today, "%Y%m%d")  # datetime format 으로 변환
@@ -76,7 +102,7 @@ class KoreanMarketFactorData:
                 date -= 3  # 연말의 경우 3일을 뺀다.
             else:
                 date -= 2  # 일요일일 경우 2일을 뺀다.
-        elif date_formated.weekday() == 4 and year == '12':
+        elif date_formated.weekday() == 4 and month == '12':
             date -= 1  # 연말인데 금요일이면 1일을 뺀다.
 
             # 추석에 대한 처리
@@ -85,31 +111,8 @@ class KoreanMarketFactorData:
         elif month == '09' and year == '2023':
             date -= 3
 
-        return year + month + str(date)
+        return year + month + str(date).zfill(2)
 
-    def __get_fundamental_data(self, market):
-        """
-         종목코드, 종목명, 업종, BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
-         :return: Pandas.DataFrame
-         """
-        today = self.__get_date()
-
-        stock_list = self.__get_korean_stock_ticker_and_name(today, market)
-        stock_cap = self.__get_fundamental_data_market_cap(today)
-
-        stock_list = pd.merge(stock_list, stock_cap, left_on="종목코드", right_on="종목코드")
-        stock_fundamental = self.__get_korean_stock_fundamental(today, market)
-
-        # 종목 코드로 조인
-        return pd.merge(stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
-
-    def __get_fundamental_data_market_cap(self, today):
-
-        stock_list = self.stock.get_market_cap(today)
-        stock_list = stock_list.reset_index()
-        stock_list.rename(columns={'티커': '종목코드'}, inplace=True)
-
-        return stock_list
 
 
 
