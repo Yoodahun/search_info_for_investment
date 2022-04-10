@@ -153,6 +153,7 @@ class Extract:
         record = []
 
         for j, report_name in enumerate(report_code):
+            # 연결 재무제표 불러오기
             report = self.dart.finstate_all(stock_name, year, report_name, fs_div='CFS')
 
             if report is None:  # 리포트가 없다면
@@ -237,8 +238,8 @@ class Extract:
                     fcf[j] = fcf[j] - (fcf[0] + fcf[1] + fcf[2])
 
                 date_day = self.__check_weekend(date_year, date_month, date_day)
-                date = date_year + date_month + str(date_day)
-                path_string = date_year + '-' + date_month + '-' + str(date_day)
+                date = date_year + date_month + str(date_day).zfill(2)
+                path_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
                 fcf[j] = (cfo[j] - cfi[j])
                 market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_name)
 
@@ -259,7 +260,10 @@ class Extract:
     def __calculate_indicator(self, df):
         df.sort_values(by=['종목코드', '연도'], inplace=True)
         print(df)
+
+        #분기별 PER
         df['PER_quarterly'] = np.nan
+        # 분기별 PBR
         df['PBR_quarterly'] = np.nan
         df['PSR'] = np.nan
         df['GP/A'] = np.nan
