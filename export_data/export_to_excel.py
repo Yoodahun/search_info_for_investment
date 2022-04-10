@@ -11,6 +11,7 @@ class ExportToData:
         print("Exporting result to excel file.....")
         writer = self.pandas.ExcelWriter(file_path, engine='openpyxl')
 
-        files[0].to_excel(writer, sheet_name="저PER_저PBR")
+        files[0].to_excel(writer, sheet_name="KOSPI_저PER_저PBR")
+        files[1].to_excel(writer, sheet_name="KOSDAQ_저PER_저PBR")
 
         writer.save()
