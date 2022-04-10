@@ -75,7 +75,7 @@ class Extract:
         return self.__join_dividend_data(
             df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
 
-    def join_finance_data(self, df):
+    def extract_finance_data(self, df):
         pd.set_option('display.max_columns', None)
 
         # print(df)
