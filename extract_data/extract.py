@@ -9,12 +9,6 @@ from config.api_key import OPEN_DART_KEY
 from const.market import KOREA_MARKET
 import pandas as pd
 
-condition = {
-    'PBR': 1.0,
-    'PER': 8,
-    'DIV': 5.0
-}
-
 report_code = [
     '11013',  # "1분기보고서":
     '11012',  # "반기보고서":
@@ -45,18 +39,18 @@ class Extract:
         self.factor_data = KoreanMarketFactorData()
         self.dart = OpenDartReader(OPEN_DART_KEY)  # config/api_key.py에서 api key의 설정이 필요함.
 
-    def filter_low_pbr_and_per(self, df):
+    def filter_low_pbr_and_per(self, pbr, per, df):
         """
         pbr under
         per under
-        :param market:
+        :param per, pbr, dataframe
         :return: Dataframe sorted by PER, PBR, 종목코드, 연도
         """
 
         print("Start extracting filter_low_PER and low_PBR")
 
-        pbr_condition = df['PBR'] <= condition["PBR"]
-        per_condition = df['PER'] <= condition["PER"]
+        pbr_condition = df['PBR'] <= pbr
+        per_condition = df['PER'] <= per
         df = df[pbr_condition & per_condition]
         # df = df.drop(["PER", "PBR"], axis=1)
         print(f"Filtered {len(df)} companies")
@@ -128,17 +122,15 @@ class Extract:
 
         return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
 
-    def get_data(self, market):
-        df = pd.DataFrame()
-        if "KOSPI" == KOREA_MARKET[market]:
-            df = self.factor_data.get_kospi_market_data()
-        elif "KOSDAQ" == KOREA_MARKET[market]:
-            df = self.factor_data.get_kosdaq_market_data()
+    def get_data(self):
+        print(f"Getting data from KRX")
+        pd.set_option('display.max_columns', None)
 
-        df = df.replace([0], np.nan)
-        df = df.dropna(axis=0)
+        df_kospi = self.factor_data.get_kospi_market_data()
 
-        return df
+        df_kosdaq = self.factor_data.get_kosdaq_market_data()
+
+        return pd.concat([df_kospi, df_kosdaq])
 
     def __find_financial_indicator(self, stock_name, year):
         current_assets = [0, 0, 0, 0]  # 유동자산
@@ -153,7 +145,6 @@ class Extract:
         cfi = [0, 0, 0, 0]  # 투자활동현금흐름
         fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 편의상 영업활동 - 투자활동 현금흐름으로 계산
         market_cap = [0, 0, 0, 0]
-        market_listed_shares = [0, 0, 0, 0]
         date_year = str(year)  # 년도 변수 지정
 
         nogp_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
@@ -406,7 +397,11 @@ class Extract:
         :param condition:
         :return: integer
         """
-        return int(report.loc[condition].iloc[0]['thstrm_amount'])
+
+        try:
+            return int(report.loc[condition].iloc[0]['thstrm_amount'])
+        except IndexError:
+            return 1
 
     def __check_weekend(self, date_year, date_month, date_day):
         """

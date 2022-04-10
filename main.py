@@ -4,6 +4,15 @@ from extract_data.extract import Extract
 from export_data import ExportToData
 from extract_data.basic_factor_data import korean_market_factor_data
 
+"""
+condition = {
+    'PBR': 1.0,
+    'PER': 8,
+    'DIV': 5.0
+}
+"""
+
+
 # test1 = korean_market_factor_data.KoreanMarketFactorData()
 
 # test1.get_kospi_market_data()
@@ -22,11 +31,21 @@ start = time.time()
 extractor = Extract()
 exporter = ExportToData()
 # test3 = extractor.filter_high_div_and_dps("KOSPI")
-LOW_PBR_AND_PER = extractor.filter_low_pbr_and_per(extractor.get_data("KOSPI"))
+kospi_kosdaq_data = extractor.get_data()
+print(kospi_kosdaq_data)
+"""
+condition = {
+    'PBR': 1.0,
+    'PER': 8,
+    'DIV': 5.0
+}
+"""
+LOW_PBR_AND_PER = extractor.filter_low_pbr_and_per(0.8, 8, kospi_kosdaq_data)
+# KOSDAQ_LOW_PBR_AND_PER = extractor.filter_low_pbr_and_per(1.0, 10, kosdaq_data)
 
 exporter.export_to_excel_with_many_sheets(
     "/Users/yoodahun/Documents/Dahun Document/Investment information/test5_excel_file.xlsx",
-    [LOW_PBR_AND_PER]
+    [kospi_kosdaq_data]
 )
 
 end = time.time()
