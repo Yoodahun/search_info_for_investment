@@ -14,15 +14,23 @@ def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
         data[data["종목명"].str.contains("스팩")].index,
         inplace=True
     )
-    #우선주 드랍
+    # 우선주 드랍
     data.drop(
         data[data["종목명"].str.endswith(("우", "우B", "우C"))].index,
         inplace=True
     )
 
-    #거래량이 0인 경우는 어떠한 이유에서 거래정지가 되어있을 확률이 높음
+    # 거래량이 0인 경우는 어떠한 이유에서 거래정지가 되어있을 확률이 높음
     data.drop(
         data[data["거래량"] == 0].index,
         inplace=True
     )
     return data[data["시가총액"] <= data["시가총액"].quantile(q=0.3)].sort_values(by=["시가총액"], ascending=True)
+
+
+def filtering_low_pbr_and_per(pbr: float, per: float, df: pd.DataFrame):
+    pbr_condition = df['PBR'] <= pbr
+    per_condition = df['PER'] > 0 | df['PER'] <= per
+    df = df[pbr_condition & per_condition]
+
+    return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'], asceding=[True, True, False, False]).reset_index(drop=True)
