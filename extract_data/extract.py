@@ -54,13 +54,13 @@ class Extract:
         df = df[pbr_condition & per_condition]
         # df = df.drop(["PER", "PBR"], axis=1)
         print(f"Filtered {len(df)} companies")
-        df.sort_values(by=['PER', 'PBR'])
-        df = self.__join_finance_data(df)
+        # df.sort_values(by=['PER', 'PBR'])
+        # df = self.join_finance_data(df)
         # df = self.__join_finance_data(df[df["종목명"] == "삼성전자"])
 
         # print(df)
 
-        return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'])
+        return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'], asceding=[True, True, False, False])
 
     def filter_high_div_and_dps(self, market):
         """
@@ -75,7 +75,7 @@ class Extract:
         return self.__join_dividend_data(
             df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
 
-    def __join_finance_data(self, df):
+    def join_finance_data(self, df):
         pd.set_option('display.max_columns', None)
 
         # print(df)
@@ -86,7 +86,7 @@ class Extract:
 
         for row in df.itertuples():
             print(f"extracting {row[2]}...")
-            for year in [2020, 2021]:
+            for year in [2019, 2020, 2021]:
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
@@ -127,7 +127,6 @@ class Extract:
         pd.set_option('display.max_columns', None)
 
         df_kospi = self.factor_data.get_kospi_market_data()
-
         df_kosdaq = self.factor_data.get_kosdaq_market_data()
 
         return pd.concat([df_kospi, df_kosdaq])
@@ -242,7 +241,12 @@ class Extract:
                 path_string = date_year + '-' + date_month + '-' + str(date_day)
                 fcf[j] = (cfo[j] - cfi[j])
                 market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_name)
-                market_cap[j] = market_cap_df.loc[path_string]["시가총액"]
+
+                try:
+                    market_cap[j] = market_cap_df.loc[path_string]["시가총액"]
+                except KeyError:
+                    print(market_cap_df)
+                    market_cap[j] = 0
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
                 record = [stock_name, path_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
@@ -445,6 +449,6 @@ class Extract:
         try:
             return self.__get_condition_value(report, condition)
         except IndexError:
-            return 1
+            return -1
         except ValueError:
-            return 1
+            return -1
