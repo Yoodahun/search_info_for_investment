@@ -70,6 +70,8 @@ def get_condition7(df):
 
 
 # 현금흐름표 부분
+
+## 영업활동 현금흐름
 def get_condition8(df):
     return (df.sj_nm == '현금흐름표') & ((df.account_nm == '영업활동으로 인한 현금흐름') | (df.account_nm == '영업활동 현금흐름') |
                                     (df.account_nm == '영업활동현금흐름') | (df.account_nm == '영업활동으로인한 현금흐름') | (
