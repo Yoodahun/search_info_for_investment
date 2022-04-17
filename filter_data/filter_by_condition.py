@@ -22,9 +22,10 @@ def filtering_low_per_that_all_data(df: pd.DataFrame):
                 drop=True))
 
 # TODO
-def filtering_high_div_that_all_data(df: pd.DataFrame):
+def filtering_high_div(df: pd.DataFrame):
     """
-    전체 데이터 중 조회시점을 기준으로 배당수익률이 가장 높은 주식
+    배당성향 30~75% 사이
+    배당수익률이 가장 높은 주식
     :param data:
     :return:
     """
@@ -32,8 +33,11 @@ def filtering_high_div_that_all_data(df: pd.DataFrame):
     df = drop_column(df)
 
     dps_condition_1 = df["DPS"] >= 0
-
     df = df[dps_condition_1]
+
+    df["배당성향"] = (df["DPS"] * df["상장주식수"]) / df["당기순이익"] * 100
+
+    df = df[df["배당성향"] >= 30 & df["배당성향"] <= 75]
 
     return ("고배당 전략",
             df.sort_values(by=["DIV"], ascending=False).reset_index(drop=True)
