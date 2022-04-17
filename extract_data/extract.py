@@ -84,8 +84,10 @@ class Extract:
         data = []
         # print(df)
 
+        count = 1
         for row in df.itertuples():
-            print(f"extracting {row[2]}...")
+            print(f"extracting {count}/{len(df)} {row[2]}...")
+            count += 1
             for year in [2019, 2020, 2021]:
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
@@ -261,7 +263,7 @@ class Extract:
         df.sort_values(by=['종목코드', '연도'], inplace=True)
         print(df)
 
-        #분기별 PER
+        # 분기별 PER
         df['PER_quarterly'] = np.nan
         # 분기별 PBR
         df['PBR_quarterly'] = np.nan
