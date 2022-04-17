@@ -272,7 +272,7 @@ class Extract:
         df['POR'] = np.nan
         df['PCR'] = np.nan
         df['PFCR'] = np.nan
-        df['NCAV/MK'] = np.nan
+        df['NCAV/MC'] = np.nan
 
         status = ['영업이익 상태', '매출액 상태', '당기순이익 상태']
         three_indicators = ['영업이익', '매출액', '당기순이익']
@@ -307,10 +307,8 @@ class Extract:
                         df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
                         df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
 
-                # GP/A : 매출총이익 / 자산총계
-                df_finance.loc[i, "GP/A"] = (df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
-                                             df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익']) / \
-                                            df_finance.iloc[i]['자산총계']
+                # GP/A : 최근 분기 매출총이익 / 자산총계
+                df_finance.loc[i, "GP/A"] = df_finance.iloc[i]['매출총이익'] / df_finance.iloc[i]['자산총계']
 
                 # POR : 시가총액 / 영업이익
                 df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
@@ -328,8 +326,8 @@ class Extract:
                         df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
 
                 # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
-                df_finance.loc[i, "NCAV/MK"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
-                                               df_finance.iloc[i]['시가총액']
+                df_finance.loc[i, "NCAV/MC"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
+                                               df_finance.iloc[i]['시가총액'] * 100
 
             ## 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
@@ -369,7 +367,7 @@ class Extract:
         ### reindexing columns and return
         return df_temp.reindex(
             columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR',
-                     'NCAV/MK']
+                     'NCAV/MC']
                     + indicators
                     + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
         )
