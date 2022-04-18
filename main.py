@@ -38,7 +38,7 @@ exporter.export_to_excel_with_many_sheets(
     "/Users/yoodahun/Documents/Dahun Document/Investment information/screeningData.xlsx",
     [
         filter_data.filtering_low_per_that_all_data(kospi_kosdaq_data.copy()),
-        filter_data.filtering_high_div_that_all_data(kospi_kosdaq_data.copy()),
+        filter_data.filtering_high_div(extracted_data.copy()),
         filter_data.filtering_low_pfcr(extracted_data.copy()),
         filter_data.filtering_low_pbr_and_per(1.0,10, extracted_data.copy()),
         filter_data.filtering_low_pbr_and_high_gpa(0.8, extracted_data.copy()),
