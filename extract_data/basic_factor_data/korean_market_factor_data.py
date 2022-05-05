@@ -26,13 +26,6 @@ class KoreanMarketFactorData:
         result = self.__get_fundamental_data("KOSDAQ")
         return result
 
-    # def get_etf_market_data(self):
-    #     etf_list = self.__get_korea_etf_ticker_and_name(self.__get_date())
-    #     etf_fund = self.stock.get_etf_price_deviation(self.__get_date(), self.__get_date(),"309210")
-    #     #
-    #     # result = pd.merge(etf_list, stock_fund, left_on="종목코드", right_on="종목코드")
-    #     print(etf_fund)
-
     def __get_fundamental_data(self, market):
         """
          종목코드, 종목명, 업종,  BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
@@ -62,7 +55,6 @@ class KoreanMarketFactorData:
         stock_list = pd.DataFrame({'종목코드': self.stock.get_market_ticker_list(date, market=market)})
         stock_list['종목명'] = stock_list['종목코드'].map(lambda x: stock.get_market_ticker_name(x))
         stock_list['업종'] = stock_list['종목명'].map(lambda x: self.fdr_data[self.fdr_data["Name"]==x]["Sector"].iloc[0])
-        # stock_list['업종'] = stock_list['종목코드'].map(lambda x: SYMBOL_SECTOR_DIC[x])
 
         return stock_list
 
@@ -84,7 +76,6 @@ class KoreanMarketFactorData:
         :return weekdays
         :return:
         """
-        # date = datetime.datetime.now() - datetime.timedelta(days=1)
         today = datetime.datetime.today().strftime("%Y%m%d")
         year = str(datetime.datetime.today().strftime("%Y"))
         month = str(datetime.datetime.today().strftime("%m"))
