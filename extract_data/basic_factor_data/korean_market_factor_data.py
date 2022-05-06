@@ -15,20 +15,18 @@ class KoreanMarketFactorData:
         종목코드, 종목명, 업종, BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
         :return: Pandas.DataFrame
         """
-        result = self.__get_fundamental_data("KOSPI")
-        return result
+        return self.__get_fundamental_data("KOSPI")
 
     def get_kosdaq_market_data(self):
         """
         종목코드, 종목명, 업종, BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
         :return: Pandas.DataFrame
         """
-        result = self.__get_fundamental_data("KOSDAQ")
-        return result
+        return self.__get_fundamental_data("KOSDAQ")
 
     def __get_fundamental_data(self, market):
         """
-         종목코드, 종목명, 업종,  BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
+         종목코드, 종목명, 업종, 시가총액, 거래량, 거래대금, BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
          :return: Pandas.DataFrame
          """
         today = self.__get_date()
