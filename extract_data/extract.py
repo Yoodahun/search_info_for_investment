@@ -172,6 +172,7 @@ class Extract:
                 condition8 = CONDITION.get_condition8(report)
                 condition9 = CONDITION.get_condition9(report)
                 condition10 = CONDITION.get_condition10(report)
+                condition15 = CONDITION.get_condition15(report)
 
                 current_assets[j] = self.__get_condition_value(report, condition1)
                 liabilities[j] = self.__get_condition_value(report, condition2)
@@ -208,8 +209,13 @@ class Extract:
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
 
+                #영업활동 현금흐름
                 cfo[j] = self.__check_index_error(report, condition8)
-                cfi[j] = self.__check_index_error(report, condition9)
+                #투자활동 현금흐름
+                # cfi[j] = self.__check_index_error(report, condition9)
+                #유형자산의 증가
+                capex[j] = self.__check_index_error(report, condition15)
+                #자산총계
                 total_assets[j] = self.__check_index_error(report, condition10)
 
                 if report_name == '11013':  # 1분기
@@ -220,7 +226,8 @@ class Extract:
                     date_month = '06'
                     date_day = 30
                     cfo[j] = cfo[j] - cfo[j - 1]  # 현금흐름은 2분기부터 시작
-                    cfi[j] = cfi[j] - cfi[j - 1]  # 현금흐름은 2분기부터 시작
+                    # cfi[j] = cfi[j] - cfi[j - 1]  # 현금흐름은 2분기부터 시작
+                    capex[j] = capex[j] - capex[j-1]
 
                 elif report_name == '11014':  # 3분기
                     date_month = '09'
@@ -236,9 +243,13 @@ class Extract:
                     income[j] = income[j] - (income[0] + income[1] + income[2])
                     net_income[j] = net_income[j] - (net_income[0] + net_income[1] + net_income[2])
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2] + cfo[j - 3])
-                    cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2] + cfo[j - 3])
-                    fcf[j] = fcf[j] - (fcf[0] + fcf[1] + fcf[2])
+                    # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2] + cfo[j - 3])
+                    capex[j] = capex[j] - (capex[j-1] + capex[j-2] + capex[j-3])
 
+                #잉여현금흐름
+                fcf[j] = (cfo[j] - capex[j])
+
+                # 날짜 계산
                 date_day = self.__check_weekend(date_year, date_month, date_day)
                 date = date_year + date_month + str(date_day).zfill(2)
                 path_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
