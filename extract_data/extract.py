@@ -462,7 +462,7 @@ class Extract:
         :return:
         """
         try:
-            return self.__get_condition_value(report, condition)
+            return int(report.loc[condition].iloc[0]['thstrm_amount'])
         except IndexError:
             return -1
         except ValueError:
