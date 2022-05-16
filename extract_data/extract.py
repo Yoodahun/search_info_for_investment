@@ -156,7 +156,16 @@ class Extract:
 
         for j, report_name in enumerate(report_code):
             # 연결 재무제표 불러오기
-            report = self.dart.finstate_all(stock_name, year, report_name, fs_div='CFS')
+            report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
+            today = datetime.today().date()
+
+            if year == today.year:
+                if report_name == "11012" and today.month <= 8: #2분기
+                    break
+                if report_name == "11014" and today.month <= 11:  # 3분기
+                    break
+                if report_name == "11011" and today.month <= 12:  # 4분기
+                    break
 
             if report is None:  # 리포트가 없다면
                 pass
