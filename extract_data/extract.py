@@ -6,31 +6,7 @@ import extract_data.krx_condition as CONDITION
 from .basic_factor_data.korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
 from config.api_key import OPEN_DART_KEY
-from const.market import KOREA_MARKET
 import pandas as pd
-
-report_code = [
-    '11013',  # "1분기보고서":
-    '11012',  # "반기보고서":
-    '11014',  # "3분기보고서":
-    '11011'  # "사업보고서"
-]
-
-indicators = [
-    '유동자산',
-    '부채총계',
-    '자본총계',
-    '자산총계',
-    '매출액',
-    '매출총이익',
-    '영업이익',
-    '당기순이익',
-    '영업활동현금흐름',
-    '잉여현금흐름'
-]
-
-financial_column_header = ["종목코드", "연도", "시가총액", '유동자산', '부채총계', '자본총계', '자산총계', '매출액', '매출총이익', '영업이익',
-                           '당기순이익', '영업활동현금흐름', '잉여현금흐름']
 
 
 class Extract:
@@ -38,6 +14,36 @@ class Extract:
     def __init__(self):
         self.factor_data = KoreanMarketFactorData()
         self.dart = OpenDartReader(OPEN_DART_KEY)  # config/api_key.py에서 api key의 설정이 필요함.
+        self.report_code = [
+            '11013',  # "1분기보고서":
+            '11012',  # "반기보고서":
+            '11014',  # "3분기보고서":
+            '11011'  # "사업보고서"
+        ]
+
+        self.indicators = [
+            '유동자산',
+            '부채총계',
+            '자본총계',
+            '자산총계',
+            '매출액',
+            '매출총이익',
+            '영업이익',
+            '당기순이익',
+            '영업활동현금흐름',
+            '잉여현금흐름'
+        ]
+
+        self.financial_column_header = ["종목코드", "연도", "시가총액"] + self.indicators
+
+    def get_data(self):
+        print(f"Getting data from KRX")
+        pd.set_option('display.max_columns', None)
+
+        df_kospi = self.factor_data.get_kospi_market_data()
+        df_kosdaq = self.factor_data.get_kosdaq_market_data()
+
+        return pd.concat([df_kospi, df_kosdaq])
 
     def filter_low_pbr_and_per(self, pbr, per, df):
         """
@@ -62,20 +68,20 @@ class Extract:
 
         return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'], asceding=[True, True, False, False])
 
-    def filter_high_div_and_dps(self, market):
-        """
-        div over 5 percent
-        :param market:
-        :return:
-        """
+    # def filter_high_div_and_dps(self, market):
+    #     """
+    #     div over 5 percent
+    #     :param market:
+    #     :return:
+    #     """
+    #
+    #     df = self.__get_data(market)
+    #     div_condition = df['DIV'] >= condition["DIV"]
+    #
+    #     return self.__join_dividend_data(
+    #         df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
 
-        df = self.__get_data(market)
-        div_condition = df['DIV'] >= condition["DIV"]
-
-        return self.__join_dividend_data(
-            df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
-
-    def extract_finance_data(self, df):
+    def extract_finance_data(self, finance_years, df):
         pd.set_option('display.max_columns', None)
 
         # print(df)
@@ -88,15 +94,15 @@ class Extract:
         for row in df.itertuples():
             print(f"extracting {count}/{len(df)} {row[2]}...")
             count += 1
-            for year in [2019, 2020, 2021]:
+            for year in finance_years:
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
             time.sleep(0.3)
 
         # print(data)
-        df_financial = pd.DataFrame(data, columns=financial_column_header)
-        df_financial.drop_duplicates(inplace=True)
+        df_financial = pd.DataFrame(data, columns=self.financial_column_header)
+        # df_financial.drop_duplicates(inplace=True)
 
         # print(df_financial)
 
@@ -105,35 +111,26 @@ class Extract:
         print("Join Data------------")
         return pd.merge(df, df_financial, left_on="종목코드", right_on="종목코드", how="outer")
 
-    def __join_dividend_data(self, df):
-        dart = OpenDartReader(OPEN_DART_KEY)
-        pd.options.display.float_format = '{:.5f}'.format
+    # def __join_dividend_data(self, df):
+    #     dart = OpenDartReader(OPEN_DART_KEY)
+    #     pd.options.display.float_format = '{:.5f}'.format
+    #
+    #     data = []
+    #     for row in df.itertuples():
+    #         print(f"extracting {row[2]}...")
+    #         record = [row[1]]
+    #         for year in [2020]:
+    #             # 지정한 해의 전전기, 전기, 당기 3년치.
+    #             lwfr_dividends, frmtrm_dividends, thstrm_dividends = self.__find_dividends(row[1], year)
+    #             record += [lwfr_dividends, frmtrm_dividends, thstrm_dividends]
+    #         data.append(record)
+    #         time.sleep(0.3)
+    #     # print(data)
+    #     df_dividend = pd.DataFrame(data, columns=["종목코드", "2019", "2020", "2021"])
+    #
+    #     return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
 
-        data = []
-        for row in df.itertuples():
-            print(f"extracting {row[2]}...")
-            record = [row[1]]
-            for year in [2020]:
-                # 지정한 해의 전전기, 전기, 당기 3년치.
-                lwfr_dividends, frmtrm_dividends, thstrm_dividends = self.__find_dividends(row[1], year)
-                record += [lwfr_dividends, frmtrm_dividends, thstrm_dividends]
-            data.append(record)
-            time.sleep(0.3)
-        # print(data)
-        df_dividend = pd.DataFrame(data, columns=["종목코드", "2019", "2020", "2021"])
-
-        return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
-
-    def get_data(self):
-        print(f"Getting data from KRX")
-        pd.set_option('display.max_columns', None)
-
-        df_kospi = self.factor_data.get_kospi_market_data()
-        df_kosdaq = self.factor_data.get_kosdaq_market_data()
-
-        return pd.concat([df_kospi, df_kosdaq])
-
-    def __find_financial_indicator(self, stock_name, year):
+    def __find_financial_indicator(self, stock_code, year):
         current_assets = [0, 0, 0, 0]  # 유동자산
         liabilities = [0, 0, 0, 0]  # 부채총계
         equity = [0, 0, 0, 0]  # 자본총계
@@ -143,18 +140,20 @@ class Extract:
         income = [0, 0, 0, 0]  # 영업이익
         net_income = [0, 0, 0, 0]  # 당기순이익
         cfo = [0, 0, 0, 0]  # 영업활동현금흐름
-        cfi = [0, 0, 0, 0]  # 투자활동현금흐름
-        fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 편의상 영업활동 - 투자활동 현금흐름으로 계산
-        market_cap = [0, 0, 0, 0]
+        #cfi = [0, 0, 0, 0]  # 투자활동현금흐름
+        capex = [0, 0, 0, 0] #유형자산의 증가
+        fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 영업활동의흐름 - 유형자산의 증가
+
+        market_cap = [0, 0, 0, 0]  # 시가 총액
         date_year = str(year)  # 년도 변수 지정
 
-        nogp_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
-                     '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
+        no_report_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
+                          '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
 
         data = []
         record = []
 
-        for j, report_name in enumerate(report_code):
+        for j, report_name in enumerate(self.report_code):
             # 연결 재무제표 불러오기
             report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
             today = datetime.today().date()
@@ -183,38 +182,40 @@ class Extract:
                 condition10 = CONDITION.get_condition10(report)
                 condition15 = CONDITION.get_condition15(report)
 
-                current_assets[j] = self.__get_condition_value(report, condition1)
-                liabilities[j] = self.__get_condition_value(report, condition2)
+                # 유동자산
+                current_assets[j] = self.__check_index_error(report, condition1)
+                # 부채총계
+                liabilities[j] = self.__check_index_error(report, condition2)
+                # 자본총계
                 equity[j] = self.__check_index_error(report, condition3)
 
-                try:
-                    if stock_name == '003550':  # LG의 경우, 매출이 쪼개져있으므로 매출원가 + 매출총이익을 더한다.
-                        revenue[j] = self.__get_condition_value(report, CONDITION.get_condition11(report)) + \
-                                     self.__get_condition_value(report, condition5)
-                    else:
-                        revenue[j] = self.__get_condition_value(report, condition4)
-                except IndexError:
-                    revenue[j] = 1
+                # 매출액 계산
+                if stock_code == '003550':  # LG의 경우, 매출이 쪼개져있으므로 매출원가 + 매출총이익을 더한다.
+                    revenue[j] = self.__check_index_error(report, CONDITION.get_condition11(report)) + \
+                                 self.__check_index_error(report, condition5)
+                else:
+                    revenue[j] = self.__check_index_error(report, condition4)
 
-                try:
-                    if stock_name == '011810':  # 매출총이익 항목이 없는 회사도 있다. 이 경우, 매출액 - 매출원가로 계산.
-                        grossProfit[j] = revenue[j] - self.__get_condition_value(report,
-                                                                                 CONDITION.get_condition11(report))
-                    elif stock_name in nogp_list:  # 매출총이익도 없고 이를 계산할 매출원가도 없다.
-                        grossProfit[j] = 1
-                    elif stock_name == '008770':
-                        grossProfit[j] = revenue[j] - self.__get_condition_value(report,
-                                                                                 CONDITION.get_condition14(report))
-                    else:
-                        grossProfit[j] = self.__get_condition_value(report, condition5)
 
-                except IndexError:
+                #매출총이익 계산
+                if stock_code == '011810':  # 매출총이익 항목이 없는 회사도 있다. 이 경우, 매출액 - 매출원가로 계산.
+                    grossProfit[j] = revenue[j] - self.__check_index_error(report,
+                                                                           CONDITION.get_condition11(report))
+                elif stock_code in no_report_list:  # 매출총이익도 없고 이를 계산할 매출원가도 없다.
                     grossProfit[j] = 1
+                elif stock_code == '008770':
+                    grossProfit[j] = revenue[j] - self.__check_index_error(report,
+                                                                           CONDITION.get_condition14(report))
+                else:
+                    grossProfit[j] = self.__check_index_error(report, condition5)
 
+                #영업이익
                 income[j] = self.__check_index_error(report, condition6)
-                if stock_name == '008600':
-                    net_income[j] = self.__get_condition_value(report, CONDITION.get_condition12(
-                        report)) - self.__get_condition_value(report, CONDITION.get_condition13(report))
+
+                #당기순이익
+                if stock_code == '008600':
+                    net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(
+                        report)) - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
 
@@ -242,7 +243,8 @@ class Extract:
                     date_month = '09'
                     date_day = 30
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2])
-                    cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2])
+                    # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2])
+                    capex[j] = capex[j] - (capex[j-1] + capex[j-2])
 
                 else:  # 4분기. 1 ~ 3분기 데이터를 더한다음 사업보고서에서 빼야 함
                     date_month = '12'
@@ -261,18 +263,21 @@ class Extract:
                 # 날짜 계산
                 date_day = self.__check_weekend(date_year, date_month, date_day)
                 date = date_year + date_month + str(date_day).zfill(2)
-                path_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
-                fcf[j] = (cfo[j] - cfi[j])
-                market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_name)
+                date_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
+
+                #각 분기별 마지막 영업일의 시가총액
+                market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_code)
 
                 try:
-                    market_cap[j] = market_cap_df.loc[path_string]["시가총액"]
+                    market_cap[j] = market_cap_df.loc[date_string]["시가총액"]
                 except KeyError:
                     print(market_cap_df)
                     market_cap[j] = 0
+
+                    # TODO
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
-                record = [stock_name, path_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
+                record = [stock_code, date_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
                           fcf[j]]
@@ -314,21 +319,14 @@ class Extract:
                 # print(df_finance.iloc[i])
 
                 # PER : 시가총액 / 당기 순이익
-
                 df_finance.loc[i, "PER_quarterly"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
                         df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
-
-                # PBR : 시가총액 / 부채총계
-                df_finance.loc[i, "PBR_quarterly"] = df_finance.iloc[i]['시가총액'] / df_finance.iloc[i]['부채총계']
 
                 # PSR : 시가총액 / 매출액
                 df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
                         df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
-
-                # GP/A : 최근 분기 매출총이익 / 자산총계
-                df_finance.loc[i, "GP/A"] = df_finance.iloc[i]['매출총이익'] / df_finance.iloc[i]['자산총계']
 
                 # POR : 시가총액 / 영업이익
                 df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
@@ -345,9 +343,17 @@ class Extract:
                         df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
                         df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
 
-                # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
-                df_finance.loc[i, "NCAV/MC"] = (df_finance.iloc[i]['유동자산'] - df_finance.iloc[i]['부채총계']) / \
-                                               df_finance.iloc[i]['시가총액'] * 100
+
+
+            # PBR : 시가총액 / 자본총계
+            df_finance["PBR_quarterly"] = df_finance['시가총액'] / df_finance['자본총계']
+
+            # GP/A : 최근 분기 매출총이익 / 자산총계
+            df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계']) * 100
+
+            # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
+            df_finance["NCAV/MC"] = (df_finance['유동자산'] - df_finance['부채총계']) / \
+                                           df_finance['시가총액'] * 100
 
             ## 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
@@ -388,22 +394,22 @@ class Extract:
         return df_temp.reindex(
             columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR',
                      'NCAV/MC']
-                    + indicators
+                    + self.indicators
                     + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
         )
 
-    def __find_dividends(self, stock_name, year):
-        stock_name_report = self.dart.report(stock_name, "배당", year, report_code["사업보고서"])
-        if stock_name_report is None:
-            return np.nan, np.nan, np.nan
-        else:
-            stock_name_report = stock_name_report.loc[(stock_name_report['se'] == '주당 현금배당금(원)')].iloc[0]
-
-            thstrm_dividends = int(stock_name_report['thstrm'].replace('-', '0').replace(',', ''))
-            frmtrm_dividends = int(stock_name_report['frmtrm'].replace('-', '0').replace(',', ''))
-            lwfr_dividends = int((stock_name_report['lwfr'].replace('-', '0').replace(',', '')))
-
-            return lwfr_dividends, frmtrm_dividends, thstrm_dividends
+    # def __find_dividends(self, stock_name, year):
+    #     stock_name_report = self.dart.report(stock_name, "배당", year, self.report_code["사업보고서"])
+    #     if stock_name_report is None:
+    #         return np.nan, np.nan, np.nan
+    #     else:
+    #         stock_name_report = stock_name_report.loc[(stock_name_report['se'] == '주당 현금배당금(원)')].iloc[0]
+    #
+    #         thstrm_dividends = int(stock_name_report['thstrm'].replace('-', '0').replace(',', ''))
+    #         frmtrm_dividends = int(stock_name_report['frmtrm'].replace('-', '0').replace(',', ''))
+    #         lwfr_dividends = int((stock_name_report['lwfr'].replace('-', '0').replace(',', '')))
+    #
+    #         return lwfr_dividends, frmtrm_dividends, thstrm_dividends
 
     def __str_to_float(self, value):
         """
@@ -418,18 +424,18 @@ class Extract:
         else:
             return int(value.replace(',', ''))
 
-    def __get_condition_value(self, report, condition):
-        """
-        해당 보고서의 해당 row의 당기금액
-        :param report:
-        :param condition:
-        :return: integer
-        """
-
-        try:
-            return int(report.loc[condition].iloc[0]['thstrm_amount'])
-        except IndexError:
-            return 1
+    # def __get_condition_value(self, report, condition):
+    #     """
+    #     해당 보고서의 해당 row의 당기금액
+    #     :param report:
+    #     :param condition:
+    #     :return: integer
+    #     """
+    #
+    #     try:
+    #         return int(report.loc[condition].iloc[0]['thstrm_amount'])
+    #     except IndexError:
+    #         return 1
 
     def __check_weekend(self, date_year, date_month, date_day):
         """
@@ -465,7 +471,7 @@ class Extract:
 
     def __check_index_error(self, report, condition):
         """
-        간혹가다가 리포트에서 값을 조회할 수 없는 회사들이 있음. 이럴때는 해당 컬럼값에 그냥 1을 넣어주기로 에러 핸들링.
+        간혹가다가 리포트에서 값을 조회할 수 없는 회사들이 있음. 이럴때는 해당 컬럼값에 그냥 -1을 넣어주기로 에러 핸들링.
         :param report:
         :param condition:
         :return:
