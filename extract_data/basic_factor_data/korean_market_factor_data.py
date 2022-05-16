@@ -101,6 +101,7 @@ class KoreanMarketFactorData:
             date -= 3
 
         return year + month + str(date).zfill(2)
+        # return '20220504'
 
 
 
