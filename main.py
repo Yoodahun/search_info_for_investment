@@ -5,50 +5,41 @@ import filter_data
 from extract_data.extract import Extract
 from export_data import ExportToData
 
-
-"""
-condition = {
-    'PBR': 0.8,
-    'PER': 10,
-    'DIV': 5.0
-}
-"""
-
-#
-
-
 start = time.time()
+
 extractor = Extract()
 exporter = ExportToData()
+
+# calling kospi and kosdaq data using pykrx and OpenFinanceReader
 kospi_kosdaq_data = extractor.get_data()
-print(kospi_kosdaq_data)
-extracted_data = extractor.extract_finance_data(filter_data.filtering_data_that_market_cap_under_thirty_percent(
-    kospi_kosdaq_data.copy()
-))
 
-# KOSDAQ_LOW_PBR_AND_PER = extractor.filter_low_pbr_and_per(1.0, 10, kosdaq_data)
+print("--------------")
 
-# exporter.export_to_excel("/Users/yoodahun/Documents/Dahun Document/Investment information/total.xlsx", kospi_kosdaq_data)
-exporter.export_to_excel("/Users/yoodahun/Documents/Dahun Document/Investment information/filtered.xlsx",
-                         filter_data.filtering_data_that_market_cap_under_thirty_percent(kospi_kosdaq_data)
-                         )
-
+# extract and calculating finance data recent 3 years data
+extracted_data = extractor.extract_finance_data(
+    [2020, 2021, 2022],
+    filter_data.filtering_data_that_market_cap_under_thirty_percent(
+        kospi_kosdaq_data
+    ))
 
 exporter.export_to_excel_with_many_sheets(
     "/Users/yoodahun/Documents/Dahun Document/Investment information/screeningData.xlsx",
     [
-        filter_data.filtering_low_per_that_all_data(kospi_kosdaq_data.copy()),
-        filter_data.filtering_high_div(extracted_data.copy()),
-        filter_data.filtering_low_pfcr(extracted_data.copy()),
-        filter_data.filtering_low_pbr_and_per(1.0,10, extracted_data.copy()),
-        filter_data.filtering_low_pbr_and_high_gpa(0.8, extracted_data.copy()),
-        filter_data.filtering_high_ncav_cap_and_gpa(extracted_data.copy()),
-        filter_data.filtering_profit_momentum(extracted_data.copy()),
-        filter_data.filtering_value_and_profit_momentum(extracted_data.copy()),
-        filter_data.filtering_value_factor(extracted_data.copy()),
-        filter_data.filtering_value_factor_upgrade(extracted_data.copy()),
-        filter_data.filtering_value_and_quality(1.0, extracted_data.copy()),
-        filter_data.filtering_new_F_score_and_low_pbr(extracted_data.copy()),
+        filter_data.filtering_low_per("ALL_DATA_저PER", kospi_kosdaq_data.copy()),
+        filter_data.filtering_low_per("소형주_저PER", extracted_data.copy()),
+        filter_data.filtering_low_pbr_and_per("ALL_DATA_저PBR_저PER", 1.0, 10, kospi_kosdaq_data.copy(), True),
+        filter_data.filtering_low_pbr_and_per("소형주_저PBR_저PER", 1.0, 10, extracted_data.copy()),
+        filter_data.filtering_high_div("고배당률_리스트", kospi_kosdaq_data.copy()),
+        filter_data.filtering_high_propensity_to_dividend("소형주 고배당성향", extracted_data.copy()),
+        filter_data.filtering_low_pfcr("소형주_저PFCR_시총잉여현금흐름", extracted_data.copy()),
+        filter_data.filtering_low_pbr_and_high_gpa("소형주_저PBR_고GPA", 0.8, extracted_data.copy()),
+        filter_data.filtering_high_ncav_cap_and_gpa("소형주_고NCAV_GPA_저부채비율", extracted_data.copy()),
+        filter_data.filtering_profit_momentum("소형주_모멘텀_전분기대비_영업이익순이익_전략", extracted_data.copy()),
+        filter_data.filtering_value_and_profit_momentum("소형주_밸류모멘텀_전략", extracted_data.copy()),
+        filter_data.filtering_value_factor("소형주_HIGH_SCORE_Four_value", extracted_data.copy()),
+        filter_data.filtering_value_factor_upgrade("소형주_강환국_슈퍼가치전략_업글", extracted_data.copy()),
+        # filter_data.filtering_value_and_quality("소형주_저PBR_고GPA_자산성장률계산", 1.0, extracted_data.copy()),
+        filter_data.filtering_new_F_score_and_low_pbr("소형주_NEW F Score and Low PBR", extracted_data.copy()),
 
         ("Extracted_RAW_Data", extracted_data),
         ("RAW_Data", kospi_kosdaq_data)
@@ -60,4 +51,3 @@ sec = (end - start)
 
 result_list = str(datetime.timedelta(seconds=sec)).split(".")
 print(f"Total extracting time : {result_list[0]} ---------------------")
-
