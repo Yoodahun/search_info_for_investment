@@ -15,15 +15,45 @@ def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
 
 def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
     """
-    전체 데이터중 조회시점을 기준으로 PER가 하위 20%이하인 기업.
+    전체 데이터중 조회시점을 기준으로 PER가 10 이하인 기업.
     :param data:
     :return:
     """
 
     df = drop_column(df_copied)
+    df = df[df["PER"] > 0]
 
     return (sheet_name,
             df[df["PER"] <= 10.0].sort_values(by=["PER"], ascending=True))
+
+
+def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFrame, all_data=False):
+    """
+    0.2 <= PBR < pbr
+    0 < PER <= per
+    :param pbr:
+    :param per:
+    :param df:
+    :param all_data:
+    :return:
+    """
+
+    df1 = df[df['PBR'].between(0.2, pbr)].copy()
+    df2 = df1[df1['PER'].between(0.5, per)].copy()
+
+    if all_data:
+        df2["PBR rank"] = df2["PBR"].rank(ascending=True)
+        df2["PER rank"] = df2["PER"].rank(ascending=True)
+    else:
+        df2["PBR rank"] = df2.groupby("연도")["PBR"].rank(ascending=True)
+        df2["PER rank"] = df2.groupby("연도")["PER"].rank(ascending=True)
+
+    df2["Total_rank"] = df2["PBR rank"] + df2["PER rank"]
+
+    return (sheet_name,
+            df2.sort_values(by=['Total_rank', '종목코드'], ascending=[True, True]).reset_index(
+                drop=True)
+            )
 
 
 def filtering_high_div(sheet_name, df: pd.DataFrame):
@@ -63,51 +93,15 @@ def filtering_high_propensity_to_dividend(sheet_name, df: pd.DataFrame):
 
     df2 = df1[(df1["배당성향"].between(30.0, 75.0))].copy()
 
-    # df2 = df2[(df2["배당성향"] >= 30.0)]
-    # df2 = df2[(df2["배당성향"] <= 75.0)]
-
     return (sheet_name,
             df2.sort_values(by=["DIV"], ascending=False).reset_index(drop=True)
-            )
-
-
-def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFrame):
-    """
-    0.2 <= PBR < pbr
-    0 < PER <= per
-    :param pbr:
-    :param per:
-    :param df:
-    :return:
-    """
-    pbr_condition_1 = (df['PBR'] >= 0.2)
-    pbr_condition_2 = (df['PBR'] <= pbr)
-    per_condition_1 = (df['PER'] > 0)
-    per_condition_2 = (df['PER'] <= per)
-
-    # df.drop(
-    #     df[df["연도"] != latest_quarter].index,
-    #     inplace=True
-    # )
-
-    df1 = df[df['PBR'].between(0.2, pbr)].copy()
-    df2 = df1[df1['PER'].between(0.5, per)].copy()
-
-    df2["PBR rank"] = df2["PBR"].rank(ascending=True)
-    df2["PER rank"] = df2["PER"].rank(ascending=True)
-
-    df["Total_rank"] = df2["PBR rank"] + df2["PER rank"]
-
-    return (sheet_name,
-            df2.sort_values(by=['Total_rank', '종목코드', '연도'], ascending=[True, True, False, False]).reset_index(
-                drop=True)
             )
 
 
 def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
     """
     Profitable value. 노비 마르크스. 저 PBR 고 GPA
-    최근분기 데이터로 계
+    최근분기 데이터로 계산
     :param pbr:
     :param df:
     :return:
@@ -121,13 +115,13 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
 
     df = df[df['PBR'].between(0.2, pbr)].copy()
     df2 = df[gpa_condition]
-    df2["PBR rank"] = df2["PBR"].rank(ascending=True)
-    df2["GP/A rank"] = df2["GP/A"].rank(ascending=False)
+    df2["PBR rank"] = df2.groupby("연도")["PBR"].rank(ascending=True)
+    df2["GP/A rank"] = df2.groupby("연도")["GP/A"].rank(ascending=False)
 
     df2["PBR and GP/A score"] = df2["PBR rank"] + df2["GP/A rank"]
 
     return (sheet_name,
-            df2.sort_values(by=['PBR and GP/A score'], ascending=[True]).reset_index(
+            df2.sort_values(by=['연도', 'PBR and GP/A score'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -138,9 +132,6 @@ def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
     :param df:
     :return:
     """
-    net_income_condition = (df['당기순이익'] > 0)
-    liabilities_condition = (df['부채비율'] < 200.0)
-    ncav_condition = (df['NCAV/MC'] > 0.0)
 
     df.drop(
         df[df["당기순이익"] <= 0].index,
@@ -157,8 +148,13 @@ def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
+    df["NCAV/MC rank"] = df.groupby("연도")["NCAV/MC"].rank(ascending=False)
+    df["GP/A rank"] = df.groupby("연도")["GP/A"].rank(ascending=False)
+
+    df["Total score"] = df["NCAV/MC rank"] + df["GP/A rank"]
+
     return (sheet_name,
-            df.sort_values(by=['NCAV/MC', 'GP/A', '종목명', '연도'], ascending=[False, False, False, False]).reset_index(
+            df.sort_values(by=['연도', "Total score"], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -176,15 +172,15 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["PBR rank"] = df["PBR"].rank(ascending=True)
-    df["PER rank"] = df["PER_quarterly"].rank(ascending=True)
-    df["PCR rank"] = df["PCR"].rank(ascending=True)
-    df["PSR rank"] = df["PSR"].rank(ascending=True)
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True)
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
     df["4 Total Value score"] = df["PBR rank"] + df["PER rank"] + df["PCR rank"] + df["PSR rank"]
 
     return (sheet_name,
-            df.sort_values(by=['4 Total Value score', '종목명', '연도'], ascending=[True, False, False]).reset_index(
+            df.sort_values(by=['연도', '4 Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -205,15 +201,15 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["PBR rank"] = df["PBR"].rank(ascending=True)
-    df["PER rank"] = df["PER_quarterly"].rank(ascending=True)
-    df["PFCR rank"] = df["PFCR"].rank(ascending=True)
-    df["PSR rank"] = df["PSR"].rank(ascending=True)
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
     df["4 Total Value score"] = df["PBR rank"] + df["PER rank"] + df["PFCR rank"] + df["PSR rank"]
 
     return (sheet_name,
-            df.sort_values(by=['4 Total Value score', '종목명', '연도'], ascending=[True, False, False]).reset_index(
+            df.sort_values(by=['연도', '4 Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -242,43 +238,43 @@ def filtering_new_F_score_and_low_pbr(sheet_name, df: pd.DataFrame):
     df["F Score"] = df["당기순이익 점수"] + df["영업활동현금흐름 점수"]
 
     return (sheet_name,
-            df.sort_values(by=['PBR', 'F Score', '종목명', '연도'], ascending=[True, False, False, False]).reset_index(
+            df.sort_values(by=['연도', 'F Score', 'PBR'], ascending=[False, False, True]).reset_index(
                 drop=True)
             )
 
 
-def filtering_value_and_quality(sheet_name, pbr, df: pd.DataFrame):
-    """
-    유진 파마 교수 최종병기전략. p.282
-    0.25 < PBR < pbr
-    0.0 < GPA
-    자산성장률
-
-    :return: pd
-    """
-    # pbr_condition_1 = (df['PBR'] >= 0.25)
-    # pbr_condition_2 = (df['PBR'] <= pbr)
-    # gpa_condition = (df['GP/A'] > 0)
-
-    df1 = df[df['PBR'].between(0.25, pbr)].copy()
-
-    df1.drop(
-        df1[df1["GP/A"] <= 0].index,
-        inplace=True
-    )
-
-    # df2 = df2[df2["PBR"] <= df2["PBR"].quantile(q=0.5)]
-    # df2 = df2[df2["GP/A"] >= df2["GP/A"].quantile(q=0.75)]
-
-    df1["PBR rank"] = df1["PBR"].rank(ascending=True)
-    df1["GP/A rank"] = df1["GP/A"].rank(ascending=False)
-
-    df1["PBR_GP/A Score"] = df1["PBR rank"] + df1["GP/A rank"]
-
-    return (sheet_name,
-            df1.sort_values(by=['PBR_GP/A Score'], ascending=True).reset_index(
-                drop=True)
-            )
+# def filtering_value_and_quality(sheet_name, pbr, df: pd.DataFrame):
+#     """
+#     유진 파마 교수 최종병기전략. p.282
+#     0.25 < PBR < pbr
+#     0.0 < GPA
+#     자산성장률
+#
+#     :return: pd
+#     """
+#     # pbr_condition_1 = (df['PBR'] >= 0.25)
+#     # pbr_condition_2 = (df['PBR'] <= pbr)
+#     # gpa_condition = (df['GP/A'] > 0)
+#
+#     df1 = df[df['PBR'].between(0.25, pbr)].copy()
+#
+#     df1.drop(
+#         df1[df1["GP/A"] <= 0].index,
+#         inplace=True
+#     )
+#
+#     # df2 = df2[df2["PBR"] <= df2["PBR"].quantile(q=0.5)]
+#     # df2 = df2[df2["GP/A"] >= df2["GP/A"].quantile(q=0.75)]
+#
+#     df1["PBR rank"] = df1["PBR"].rank(ascending=True)
+#     df1["GP/A rank"] = df1["GP/A"].rank(ascending=False)
+#
+#     df1["PBR_GP/A Score"] = df1["PBR rank"] + df1["GP/A rank"]
+#
+#     return (sheet_name,
+#             df1.sort_values(by=['PBR_GP/A Score'], ascending=True).reset_index(
+#                 drop=True)
+#             )
 
 
 def filtering_low_pfcr(sheet_name, df: pd.DataFrame):
@@ -296,7 +292,7 @@ def filtering_low_pfcr(sheet_name, df: pd.DataFrame):
     df = df[df["PFCR"] > 0]
 
     return (sheet_name,
-            df.sort_values(by=['PFCR'], ascending=[True]).reset_index(
+            df.sort_values(by=['연도', 'PFCR'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -315,7 +311,7 @@ def filtering_profit_momentum(sheet_name, df: pd.DataFrame):
     df["모멘텀 순위"] = df["당기영업이익 성장률 순위"] + df["당기순이익 성장률 순위"]
 
     return (sheet_name,
-            df.sort_values(by=['모멘텀 순위'], ascending=[True]).reset_index(
+            df.sort_values(by=['연도', '모멘텀 순위'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -340,16 +336,16 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     df["당기영업이익 성장률 순위"] = df.groupby("연도")["영업이익 증가율"].rank(method='min', ascending=False)
     df["당기순이익 성장률 순위"] = df.groupby("연도")["당기순이익 증가율"].rank(method='min', ascending=False)
 
-    df["PBR rank"] = df["PBR"].rank(ascending=True)
-    df["PER rank"] = df["PER_quarterly"].rank(ascending=True)
-    df["PFCR rank"] = df["PFCR"].rank(ascending=True)
-    df["PSR rank"] = df["PSR"].rank(ascending=True)
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
     df["모멘텀 순위"] = (df["당기영업이익 성장률 순위"] + df["당기순이익 성장률 순위"] + df["PBR rank"] + df["PER rank"] + df["PFCR rank"] + df[
         "PSR rank"]) / 6
 
     return (sheet_name,
-            df.sort_values(by=['모멘텀 순위'], ascending=[True]).reset_index(
+            df.sort_values(by=['연도', '모멘텀 순위'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -371,14 +367,8 @@ def drop_column(df: pd.DataFrame):
         df[df["종목명"].str.endswith(("홀딩스", "지주", "지주회사"))].index,
         inplace=True
     )
-    print("거래량 드랍 전")
-    print(df[df["종목명"] == "NAVER"]["거래량"])
 
     # 직전 거래일의 거래량이 0인 경우는 어떠한 이유에서 거래정지가 되어있을 확률이 높음
     df = df[df["거래량"] > 0]
-
-
-    print("거래량 드랍 후")
-    print(df[df["종목명"] == "NAVER"]["거래량"])
 
     return df
