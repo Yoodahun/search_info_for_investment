@@ -21,7 +21,10 @@ self==2020.12.3
 six==1.16.0
 soupsieve==2.3.1
 tqdm==4.63.0
-urllib3==1.26.8
+urllib3==1.26.9
 wrapt==1.14.0
 xlrd==2.0.1
 zope.interface==5.4.0
+pyOpenSSL==22.0.0
+ndg-httpsclient==0.5.1
+pyasn1==0.4.8
