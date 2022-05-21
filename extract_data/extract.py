@@ -2,6 +2,8 @@ import time
 from datetime import datetime
 
 import numpy as np
+from requests.exceptions import SSLError
+
 import extract_data.krx_condition as CONDITION
 from .basic_factor_data.korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
@@ -58,77 +60,36 @@ class Extract:
         pbr_condition = df['PBR'] <= pbr
         per_condition = df['PER'] <= per
         df = df[pbr_condition & per_condition]
-        # df = df.drop(["PER", "PBR"], axis=1)
-        print(f"Filtered {len(df)} companies")
-        # df.sort_values(by=['PER', 'PBR'])
-        # df = self.join_finance_data(df)
-        # df = self.__join_finance_data(df[df["종목명"] == "삼성전자"])
 
-        # print(df)
+        print(f"Filtered {len(df)} companies")
 
         return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'], asceding=[True, True, False, False])
-
-    # def filter_high_div_and_dps(self, market):
-    #     """
-    #     div over 5 percent
-    #     :param market:
-    #     :return:
-    #     """
-    #
-    #     df = self.__get_data(market)
-    #     div_condition = df['DIV'] >= condition["DIV"]
-    #
-    #     return self.__join_dividend_data(
-    #         df[div_condition].sort_values(by=['DIV', 'PBR', 'PER'], axis=0, ascending=False))
 
     def extract_finance_data(self, finance_years, df):
         pd.set_option('display.max_columns', None)
 
-        # print(df)
         pd.options.display.float_format = '{:.2f}'.format
 
         data = []
-        # print(df)
 
         count = 1
         for row in df.itertuples():
             print(f"extracting {count}/{len(df)} {row[2]}...")
             count += 1
             for year in finance_years:
+                # calling finance data using OpenDartReader
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
-            time.sleep(0.3)
+            time.sleep(0.15)
 
-        # print(data)
         df_financial = pd.DataFrame(data, columns=self.financial_column_header)
-        # df_financial.drop_duplicates(inplace=True)
 
-        # print(df_financial)
-
+        # calculating factor data
         df_financial = self.__calculate_indicator(df_financial)
-        # df_financial = df_financial.drop(['시가총액'], axis=1)
+
         print("Join Data------------")
         return pd.merge(df, df_financial, left_on="종목코드", right_on="종목코드", how="outer")
-
-    # def __join_dividend_data(self, df):
-    #     dart = OpenDartReader(OPEN_DART_KEY)
-    #     pd.options.display.float_format = '{:.5f}'.format
-    #
-    #     data = []
-    #     for row in df.itertuples():
-    #         print(f"extracting {row[2]}...")
-    #         record = [row[1]]
-    #         for year in [2020]:
-    #             # 지정한 해의 전전기, 전기, 당기 3년치.
-    #             lwfr_dividends, frmtrm_dividends, thstrm_dividends = self.__find_dividends(row[1], year)
-    #             record += [lwfr_dividends, frmtrm_dividends, thstrm_dividends]
-    #         data.append(record)
-    #         time.sleep(0.3)
-    #     # print(data)
-    #     df_dividend = pd.DataFrame(data, columns=["종목코드", "2019", "2020", "2021"])
-    #
-    #     return pd.merge(df, df_dividend, left_on="종목코드", right_on="종목코드")
 
     def __find_financial_indicator(self, stock_code, year):
         current_assets = [0, 0, 0, 0]  # 유동자산
@@ -154,8 +115,13 @@ class Extract:
         record = []
 
         for j, report_name in enumerate(self.report_code):
+            time.sleep(0.1)
             # 연결 재무제표 불러오기
-            report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
+            try:
+                report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
+            except SSLError:
+                report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
+
             today = datetime.today().date()
 
             if year == today.year:
@@ -274,13 +240,15 @@ class Extract:
                     print(market_cap_df)
                     market_cap[j] = 0
 
-                    # TODO
+                # TODO
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
                 record = [stock_code, date_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
                           fcf[j]]
+
+
             data.append(record)
         return data
 
@@ -312,11 +280,7 @@ class Extract:
             print(f"Calculating {row[0]} factor indicators")
             df_finance = df[df["종목코드"] == row[0]].reset_index()
 
-            # print(df_finance)
-
             for i in range(3, len(df_finance)):
-                # print(df_finance)
-                # print(df_finance.iloc[i])
 
                 # PER : 시가총액 / 당기 순이익
                 df_finance.loc[i, "PER_quarterly"] = df_finance.iloc[i]['시가총액'] / (
@@ -398,19 +362,6 @@ class Extract:
                     + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
         )
 
-    # def __find_dividends(self, stock_name, year):
-    #     stock_name_report = self.dart.report(stock_name, "배당", year, self.report_code["사업보고서"])
-    #     if stock_name_report is None:
-    #         return np.nan, np.nan, np.nan
-    #     else:
-    #         stock_name_report = stock_name_report.loc[(stock_name_report['se'] == '주당 현금배당금(원)')].iloc[0]
-    #
-    #         thstrm_dividends = int(stock_name_report['thstrm'].replace('-', '0').replace(',', ''))
-    #         frmtrm_dividends = int(stock_name_report['frmtrm'].replace('-', '0').replace(',', ''))
-    #         lwfr_dividends = int((stock_name_report['lwfr'].replace('-', '0').replace(',', '')))
-    #
-    #         return lwfr_dividends, frmtrm_dividends, thstrm_dividends
-
     def __str_to_float(self, value):
         """
         문자열로된 숫자를 소수점으로 변환.
@@ -423,19 +374,6 @@ class Extract:
             return 0
         else:
             return int(value.replace(',', ''))
-
-    # def __get_condition_value(self, report, condition):
-    #     """
-    #     해당 보고서의 해당 row의 당기금액
-    #     :param report:
-    #     :param condition:
-    #     :return: integer
-    #     """
-    #
-    #     try:
-    #         return int(report.loc[condition].iloc[0]['thstrm_amount'])
-    #     except IndexError:
-    #         return 1
 
     def __check_weekend(self, date_year, date_month, date_day):
         """
