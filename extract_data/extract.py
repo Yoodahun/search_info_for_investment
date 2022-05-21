@@ -47,24 +47,6 @@ class Extract:
 
         return pd.concat([df_kospi, df_kosdaq])
 
-    def filter_low_pbr_and_per(self, pbr, per, df):
-        """
-        pbr under
-        per under
-        :param per, pbr, dataframe
-        :return: Dataframe sorted by PER, PBR, 종목코드, 연도
-        """
-
-        print("Start extracting filter_low_PER and low_PBR")
-
-        pbr_condition = df['PBR'] <= pbr
-        per_condition = df['PER'] <= per
-        df = df[pbr_condition & per_condition]
-
-        print(f"Filtered {len(df)} companies")
-
-        return df.sort_values(by=['PER', 'PBR', '종목코드', '연도'], asceding=[True, True, False, False])
-
     def extract_finance_data(self, finance_years, df):
         pd.set_option('display.max_columns', None)
 
