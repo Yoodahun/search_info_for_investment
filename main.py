@@ -23,7 +23,7 @@ extracted_data = extractor.extract_finance_data(
     ))
 
 exporter.export_to_excel_with_many_sheets(
-    "/Users/yoodahun/Documents/Dahun Document/Investment information/screeningData.xlsx",
+    f"/Users/yoodahun/Documents/Dahun Document/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_screeningData.xlsx",
     [
         filter_data.filtering_low_per("ALL_DATA_저PER", kospi_kosdaq_data.copy()),
         filter_data.filtering_low_per("소형주_저PER", extracted_data.copy()),
