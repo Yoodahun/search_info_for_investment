@@ -311,6 +311,10 @@ class Extract:
             df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
                 0) * 100
 
+            ## 영업이익률 / 당기순이익률
+            df_finance['영업이익률'] = (df_finance['영업이익']/df_finance['매출액']) * 100
+            df_finance['당기순이익률'] = (df_finance['당기순이익']/df_finance['매출액']) * 100
+
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
 
             ## 영업이익, 매출액, 당기순이익 확인 지표
@@ -338,10 +342,10 @@ class Extract:
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'PSR', 'GP/A', 'POR', 'PCR', 'PFCR',
+            columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
                      'NCAV/MC']
                     + self.indicators
-                    + ['부채비율', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익 증가율', status[2]]
+                    + ['부채비율','영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률','당기순이익 증가율', status[2]]
         )
 
     def __str_to_float(self, value):
