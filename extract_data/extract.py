@@ -239,15 +239,16 @@ class Extract:
         print(df)
 
         # 분기별 PER
-        df['PER_quarterly'] = np.nan
+        df['분기 PER'] = np.nan
         # 분기별 PBR
-        df['PBR_quarterly'] = np.nan
+        df['분기 PBR'] = np.nan
         df['PSR'] = np.nan
         df['GP/A'] = np.nan
         df['POR'] = np.nan
         df['PCR'] = np.nan
         df['PFCR'] = np.nan
         df['NCAV/MC'] = np.nan
+        df['분기 ROE'] = np.nan
 
         status = ['영업이익 상태', '매출액 상태', '당기순이익 상태']
         three_indicators = ['영업이익', '매출액', '당기순이익']
@@ -265,7 +266,7 @@ class Extract:
             for i in range(3, len(df_finance)):
 
                 # PER : 시가총액 / 당기 순이익
-                df_finance.loc[i, "PER_quarterly"] = df_finance.iloc[i]['시가총액'] / (
+                df_finance.loc[i, "분기 PER"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
                         df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
 
@@ -289,13 +290,20 @@ class Extract:
                         df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
                         df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
 
+                # ROE : 당기순이익 / 자본총계
+                df_finance.loc[i, "분기 ROE"] = ((
+                        df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
+                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])/ df_finance.iloc[i]['자본총계']) * 100
+
 
 
             # PBR : 시가총액 / 자본총계
-            df_finance["PBR_quarterly"] = df_finance['시가총액'] / df_finance['자본총계']
+            df_finance["분기 PBR"] = df_finance['시가총액'] / df_finance['자본총계']
 
             # GP/A : 최근 분기 매출총이익 / 자산총계
-            df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계']) * 100
+            df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계'])
+
+
 
             # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
             df_finance["NCAV/MC"] = (df_finance['유동자산'] - df_finance['부채총계']) / \
@@ -342,7 +350,7 @@ class Extract:
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액', 'PER_quarterly', 'PBR_quarterly', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
+            columns=['종목코드', '연도', '시가총액', '분기 PER', '분기 PBR', '분기 ROE', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
                      'NCAV/MC']
                     + self.indicators
                     + ['부채비율','영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률','당기순이익 증가율', status[2]]
