@@ -168,12 +168,12 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
     """
 
     df.drop(
-        df[df["PER_quarterly"] <= 0].index,
+        df[df["분기 PER"] <= 0].index,
         inplace=True
     )
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
-    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
     df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True)
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
@@ -181,6 +181,52 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
 
     return (sheet_name,
             df.sort_values(by=['연도', '4 Total Value score'], ascending=[False, True]).reset_index(
+                drop=True)
+            )
+
+
+def filtering_value_factor2(sheet_name, df: pd.DataFrame):
+    """
+    아래의 높은순 랭크
+    - EPS , ROE, 영업이익률, 순이익률
+    아래 낮은 순 랭크
+    - 분기 PER, PBR, PCR, PSR, POR, PFCR
+
+    분기 PER값을 사용
+    :param df:
+    :return:
+    """
+
+    df.drop(
+        df[df["분기 PER"] <= 0].index,
+        inplace=True
+    )
+
+    df["EPS rank"] = df.groupby("연도")["EPS"].rank(ascending=False)
+    df["ROE rank"] = df.groupby("연도")["분기 ROE"].rank(ascending=False)
+    df["영업이익률 rank"] = df.groupby("연도")["영업이익률"].rank(ascending=False)
+    df["순이익률 rank"] = df.groupby("연도")["당기순이익률"].rank(ascending=False)
+
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
+    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True)
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
+    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True)
+    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
+
+    df["Total Value score"] = \
+        df["EPS rank"] + \
+        df["ROE rank"] + \
+        df["영업이익률 rank"] + \
+        df["순이익률 rank"] + \
+        df["PBR rank"] + \
+        df["PER rank"] + \
+        df["PCR rank"] + \
+        df["PSR rank"] + \
+        df["POR rank"] + \
+        df["PFCR rank"]
+    return (sheet_name,
+            df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
@@ -197,12 +243,12 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
     """
 
     df.drop(
-        df[df["PER_quarterly"] <= 0].index,
+        df[df["분기 PER"] <= 0].index,
         inplace=True
     )
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
-    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
     df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
@@ -329,7 +375,7 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     """
 
     df.drop(
-        df[df["PER_quarterly"] <= 0].index,
+        df[df["분기 PER"] <= 0].index,
         inplace=True
     )
 
@@ -337,7 +383,7 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     df["당기순이익 성장률 순위"] = df.groupby("연도")["당기순이익 증가율"].rank(method='min', ascending=False)
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
-    df["PER rank"] = df.groupby("연도")["PER_quarterly"].rank(ascending=True)
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
     df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
 
