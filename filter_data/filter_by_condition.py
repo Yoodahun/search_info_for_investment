@@ -56,6 +56,29 @@ def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFra
             )
 
 
+def filtering_low_psr_and_per(sheet_name, per: float, df: pd.DataFrame):
+    """
+    저 PSR
+    0 < PER <= per
+    :param pbr:
+    :param per:
+    :param df:
+    :return:
+    """
+
+    df2 = df[df['분기 PER'].between(0.5, per)].copy()
+
+    df2["PSR rank"] = df2.groupby("연도")["PSR"].rank(ascending=True)
+    df2["PER rank"] = df2.groupby("연도")["분기 PER"].rank(ascending=True)
+
+    df2["Total_rank"] = df2["PSR rank"] + df2["PER rank"]
+
+    return (sheet_name,
+            df2.sort_values(by=['연도', 'Total_rank'], ascending=[True, True]).reset_index(
+                drop=True)
+            )
+
+
 def filtering_high_div(sheet_name, df: pd.DataFrame):
     """
     전체 데이터중 조회 시점으로 배당률이 0제외한 기업들에서 내림차순으로 정렬한 데이터.
@@ -128,7 +151,7 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
 
 def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
     """
-    청산가치/시가총액이 높고 GPA수치가 높은 기업들
+    청산가치/시가총액이 낮고 GPA수치가 높은 기업들
     :param df:
     :return:
     """
@@ -148,7 +171,7 @@ def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["NCAV/MC rank"] = df.groupby("연도")["NCAV/MC"].rank(ascending=False)
+    df["NCAV/MC rank"] = df.groupby("연도")["NCAV/MC"].rank(ascending=True)
     df["GP/A rank"] = df.groupby("연도")["GP/A"].rank(ascending=False)
 
     df["Total score"] = df["NCAV/MC rank"] + df["GP/A rank"]
