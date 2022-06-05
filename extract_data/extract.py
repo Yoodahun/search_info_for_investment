@@ -83,8 +83,8 @@ class Extract:
         income = [0, 0, 0, 0]  # 영업이익
         net_income = [0, 0, 0, 0]  # 당기순이익
         cfo = [0, 0, 0, 0]  # 영업활동현금흐름
-        #cfi = [0, 0, 0, 0]  # 투자활동현금흐름
-        capex = [0, 0, 0, 0] #유형자산의 증가
+        # cfi = [0, 0, 0, 0]  # 투자활동현금흐름
+        capex = [0, 0, 0, 0]  # 유형자산의 증가
         fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 영업활동의흐름 - 유형자산의 증가
 
         market_cap = [0, 0, 0, 0]  # 시가 총액
@@ -107,7 +107,7 @@ class Extract:
             today = datetime.today().date()
 
             if year == today.year:
-                if report_name == "11012" and today.month <= 8: #2분기
+                if report_name == "11012" and today.month <= 8:  # 2분기
                     break
                 if report_name == "11014" and today.month <= 11:  # 3분기
                     break
@@ -144,8 +144,7 @@ class Extract:
                 else:
                     revenue[j] = self.__check_index_error(report, condition4)
 
-
-                #매출총이익 계산
+                # 매출총이익 계산
                 if stock_code == '011810':  # 매출총이익 항목이 없는 회사도 있다. 이 경우, 매출액 - 매출원가로 계산.
                     grossProfit[j] = revenue[j] - self.__check_index_error(report,
                                                                            CONDITION.get_condition11(report))
@@ -157,23 +156,23 @@ class Extract:
                 else:
                     grossProfit[j] = self.__check_index_error(report, condition5)
 
-                #영업이익
+                # 영업이익
                 income[j] = self.__check_index_error(report, condition6)
 
-                #당기순이익
+                # 당기순이익
                 if stock_code == '008600':
                     net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(
                         report)) - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
 
-                #영업활동 현금흐름
+                # 영업활동 현금흐름
                 cfo[j] = self.__check_index_error(report, condition8)
-                #투자활동 현금흐름
+                # 투자활동 현금흐름
                 # cfi[j] = self.__check_index_error(report, condition9)
-                #유형자산의 증가
+                # 유형자산의 증가
                 capex[j] = self.__check_index_error(report, condition15)
-                #자산총계
+                # 자산총계
                 total_assets[j] = self.__check_index_error(report, condition10)
 
                 if report_name == '11013':  # 1분기
@@ -185,14 +184,14 @@ class Extract:
                     date_day = 30
                     cfo[j] = cfo[j] - cfo[j - 1]  # 현금흐름은 2분기부터 시작
                     # cfi[j] = cfi[j] - cfi[j - 1]  # 현금흐름은 2분기부터 시작
-                    capex[j] = capex[j] - capex[j-1]
+                    capex[j] = capex[j] - capex[j - 1]
 
                 elif report_name == '11014':  # 3분기
                     date_month = '09'
                     date_day = 30
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2])
                     # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2])
-                    capex[j] = capex[j] - (capex[j-1] + capex[j-2])
+                    capex[j] = capex[j] - (capex[j - 1] + capex[j - 2])
 
                 else:  # 4분기. 1 ~ 3분기 데이터를 더한다음 사업보고서에서 빼야 함
                     date_month = '12'
@@ -203,9 +202,9 @@ class Extract:
                     net_income[j] = net_income[j] - (net_income[0] + net_income[1] + net_income[2])
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2] + cfo[j - 3])
                     # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2] + cfo[j - 3])
-                    capex[j] = capex[j] - (capex[j-1] + capex[j-2] + capex[j-3])
+                    capex[j] = capex[j] - (capex[j - 1] + capex[j - 2] + capex[j - 3])
 
-                #잉여현금흐름
+                # 잉여현금흐름
                 fcf[j] = (cfo[j] - capex[j])
 
                 # 날짜 계산
@@ -213,7 +212,7 @@ class Extract:
                 date = date_year + date_month + str(date_day).zfill(2)
                 date_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
 
-                #각 분기별 마지막 영업일의 시가총액
+                # 각 분기별 마지막 영업일의 시가총액
                 market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_code)
 
                 try:
@@ -229,7 +228,6 @@ class Extract:
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
                           fcf[j]]
-
 
             data.append(record)
         return data
@@ -264,7 +262,6 @@ class Extract:
             df_finance = df[df["종목코드"] == row[0]].reset_index()
 
             for i in range(3, len(df_finance)):
-
                 # PER : 시가총액 / 당기 순이익
                 df_finance.loc[i, "분기 PER"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
@@ -292,10 +289,10 @@ class Extract:
 
                 # ROE : 당기순이익 / 자본총계
                 df_finance.loc[i, "분기 ROE"] = ((
-                        df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
-                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])/ df_finance.iloc[i]['자본총계']) * 100
-
-
+                                                       df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2][
+                                                   '당기순이익'] +
+                                                       df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익']) /
+                                               df_finance.iloc[i]['자본총계']) * 100
 
             # PBR : 시가총액 / 자본총계
             df_finance["분기 PBR"] = df_finance['시가총액'] / df_finance['자본총계']
@@ -303,11 +300,9 @@ class Extract:
             # GP/A : 최근 분기 매출총이익 / 자산총계
             df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계'])
 
-
-
             # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
             df_finance["NCAV/MC"] = (df_finance['유동자산'] - df_finance['부채총계']) / \
-                                           df_finance['시가총액'] * 100
+                                    df_finance['시가총액'] * 100
 
             ## 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
@@ -319,9 +314,17 @@ class Extract:
             df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
                 0) * 100
 
+
+            if (df_finance['영업이익'].shift(1) < 0).any() & (df_finance['영업이익'] > 0).any(): df_finance['영업이익 증가율'] = abs(
+                df_finance['영업이익 증가율'])
+            if (df_finance['매출액'].shift(1) < 0).any() & (df_finance['매출액'] > 0).any(): df_finance['매출액 증가율'] = abs(
+                df_finance['매출액 증가율'])
+            if (df_finance['당기순이익'].shift(1) < 0).any() & (df_finance['당기순이익'] > 0).any(): df_finance['당기순이익 증가율'] = abs(
+                df_finance['당기순이익 증가율'])
+
             ## 영업이익률 / 당기순이익률
-            df_finance['영업이익률'] = (df_finance['영업이익']/df_finance['매출액']) * 100
-            df_finance['당기순이익률'] = (df_finance['당기순이익']/df_finance['매출액']) * 100
+            df_finance['영업이익률'] = (df_finance['영업이익'] / df_finance['매출액']) * 100
+            df_finance['당기순이익률'] = (df_finance['당기순이익'] / df_finance['매출액']) * 100
 
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
 
@@ -353,7 +356,7 @@ class Extract:
             columns=['종목코드', '연도', '시가총액', '분기 PER', '분기 PBR', '분기 ROE', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
                      'NCAV/MC']
                     + self.indicators
-                    + ['부채비율','영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률','당기순이익 증가율', status[2]]
+                    + ['부채비율', '영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률', '당기순이익 증가율', status[2]]
         )
 
     def __str_to_float(self, value):
