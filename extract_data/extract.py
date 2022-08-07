@@ -240,6 +240,7 @@ class Extract:
         df['분기 PER'] = np.nan
         # 분기별 PBR
         df['분기 PBR'] = np.nan
+        df['분기 PEG'] = np.nan
         df['PSR'] = np.nan
         df['GP/A'] = np.nan
         df['POR'] = np.nan
@@ -298,7 +299,7 @@ class Extract:
             df_finance["분기 PBR"] = df_finance['시가총액'] / df_finance['자본총계']
 
             # GP/A : 최근 분기 매출총이익 / 자산총계
-            df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계'])
+            df_finance["GP/A"] = (df_finance['매출총이익'] / df_finance['자산총계']) * 100
 
             # NCAV/MK : 청산가치(유동자산 - 부채총계) / 시가총액
             df_finance["NCAV/MC"] = (df_finance['유동자산'] - df_finance['부채총계']) / \
@@ -308,18 +309,26 @@ class Extract:
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
 
             ###영업이익 / 매출액 / 당기순이익 증가율
-            df_finance['영업이익 증가율'] = (df_finance['영업이익'].diff() / df_finance['영업이익'].shift(1)).fillna(
-                0) * 100
-            df_finance['매출액 증가율'] = (df_finance['매출액'].diff() / df_finance['매출액'].shift(1)).fillna(0) * 100
-            df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
-                0) * 100
+            df_finance['영업이익 증가율'] = df_finance['영업이익'].pct_change() * 100
+            df_finance['매출액 증가율'] = df_finance['매출액'].pct_change() * 100
+            df_finance['당기순이익 증가율'] = df_finance['당기순이익'].pct_change() * 100
+
+            # df_finance['영업이익 증가율'] = (df_finance['영업이익'].diff() / df_finance['영업이익'].shift(1)).fillna(
+            #     0) * 100
+            # df_finance['매출액 증가율'] = (df_finance['매출액'].diff() / df_finance['매출액'].shift(1)).fillna(0) * 100
+            # df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
+            #     0) * 100
+
+            # PEG : PER / 당기순이익 증가율
+            df_finance["분기 PEG"] = df_finance['분기 PER'] / df_finance['당기순이익 증가율']
 
 
             if (df_finance['영업이익'].shift(1) < 0).any() & (df_finance['영업이익'] > 0).any(): df_finance['영업이익 증가율'] = abs(
                 df_finance['영업이익 증가율'])
             if (df_finance['매출액'].shift(1) < 0).any() & (df_finance['매출액'] > 0).any(): df_finance['매출액 증가율'] = abs(
                 df_finance['매출액 증가율'])
-            if (df_finance['당기순이익'].shift(1) < 0).any() & (df_finance['당기순이익'] > 0).any(): df_finance['당기순이익 증가율'] = abs(
+            if (df_finance['당기순이익'].shift(1) < 0).any() & (df_finance['당기순이익'] > 0).any(): df_finance[
+                '당기순이익 증가율'] = abs(
                 df_finance['당기순이익 증가율'])
 
             ## 영업이익률 / 당기순이익률
@@ -353,7 +362,7 @@ class Extract:
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액', '분기 PER', '분기 PBR', '분기 ROE', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
+            columns=['종목코드', '연도', '시가총액', '분기 PER', '분기 PBR', '분기 ROE', '분기 PEG', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
                      'NCAV/MC']
                     + self.indicators
                     + ['부채비율', '영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률', '당기순이익 증가율', status[2]]

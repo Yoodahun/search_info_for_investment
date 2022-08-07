@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
+def filtering_data_that_market_cap_under(percent:float, data: pd.DataFrame):
     """
     코스피, 코스닥의 종목에서 시가총액 30%이하의 종목으로 필터함.
     이 때, 기업소재지가 외국, 스팩주, 우선주, 최신거래일에 거래량이 0인 종목은 제거함.
@@ -10,7 +10,7 @@ def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
     """
 
     data = drop_column(data)
-    return data[data["시가총액"] <= data["시가총액"].quantile(q=0.3)].sort_values(by=["시가총액"], ascending=True)
+    return data[data["시가총액"] <= data["시가총액"].quantile(q=percent)].sort_values(by=["시가총액"], ascending=True)
 
 
 def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
@@ -148,10 +148,35 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
                 drop=True)
             )
 
+def filtering_peg(sheet_name, df: pd.DataFrame):
+    """
+    PEG
+    최근분기 데이터로 계산
+    :param pbr:
+    :param df:
+    :return:
+    """
+
+    df.drop(
+        df[df["부채비율"] >= 400.0].index,
+        inplace=True
+    )
+
+
+    peg_condition = (df['분기 PEG'] < 1.2)
+
+    df2 = df[peg_condition]
+
+
+    return (sheet_name,
+            df2.sort_values(by=['연도', '분기 PEG'], ascending=[False, True]).reset_index(
+                drop=True)
+            )
+
 
 def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
     """
-    청산가치/시가총액이 낮고 GPA수치가 높은 기업들
+    청산가치/시가총액이 높고 GPA수치가 높은 기업들
     :param df:
     :return:
     """
@@ -171,7 +196,7 @@ def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["NCAV/MC rank"] = df.groupby("연도")["NCAV/MC"].rank(ascending=True)
+    df["NCAV/MC rank"] = df.groupby("연도")["NCAV/MC"].rank(ascending=False)
     df["GP/A rank"] = df.groupby("연도")["GP/A"].rank(ascending=False)
 
     df["Total score"] = df["NCAV/MC rank"] + df["GP/A rank"]

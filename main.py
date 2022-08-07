@@ -18,7 +18,7 @@ print("--------------")
 # extract and calculating finance data recent 3 years data
 extracted_data = extractor.extract_finance_data(
     [2020, 2021, 2022],
-    filter_data.filtering_data_that_market_cap_under_thirty_percent(
+    filter_data.filtering_data_that_market_cap_under(0.4,
         kospi_kosdaq_data
     ))
 
@@ -30,6 +30,7 @@ exporter.export_to_excel_with_many_sheets(
         filter_data.filtering_low_pbr_and_per("ALL_DATA_저PBR_저PER", 1.0, 10, kospi_kosdaq_data.copy(), True),
         filter_data.filtering_low_pbr_and_per("소형주_저PBR_저PER", 1.0, 10, extracted_data.copy()),
         filter_data.filtering_low_psr_and_per("소형주_저PSR_저PER", 10, extracted_data.copy()),
+        filter_data.filtering_peg("소형주_PEG", extracted_data.copy()),
         filter_data.filtering_high_div("고배당률_리스트", kospi_kosdaq_data.copy()),
         filter_data.filtering_high_propensity_to_dividend("소형주 고배당성향", extracted_data.copy()),
         filter_data.filtering_low_pfcr("소형주_저PFCR_시총잉여현금흐름", extracted_data.copy()),
