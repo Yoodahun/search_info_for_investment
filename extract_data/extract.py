@@ -50,7 +50,7 @@ class Extract:
     def extract_finance_data(self, finance_years, df):
         pd.set_option('display.max_columns', None)
 
-        pd.options.display.float_format = '{:.2f}'.format
+        pd.options.display.float_format = '{:.6f}'.format
 
         data = []
 
@@ -117,7 +117,8 @@ class Extract:
                     break
 
             if report is None:  # 리포트가 없다면
-                pass
+                continue
+
 
             else:
                 condition1 = CONDITION.get_condition1(report)
