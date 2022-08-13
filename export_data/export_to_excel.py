@@ -6,10 +6,10 @@ class ExportToData:
     def __init__(self):
         self.pandas = pd
 
-    def export_to_excel(self, file_path, file):
+    def export_to_excel(self, file_path, sheet_name, file):
         print("Exporting result to excel file.....")
         writer = self.pandas.ExcelWriter(file_path, engine='openpyxl')
-        file.to_excel(writer, sheet_name="test")
+        file.to_excel(writer, sheet_name=sheet_name)
 
         writer.save()
 
