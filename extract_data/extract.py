@@ -104,10 +104,12 @@ class Extract:
             except SSLError:
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
 
+
+
             today = datetime.today().date()
 
             if year == today.year:
-                if report_name == "11012" and today.month <= 8:  # 2분기
+                if report_name == "11012" and today.month <= 7:  # 2분기
                     break
                 if report_name == "11014" and today.month <= 11:  # 3분기
                     break
