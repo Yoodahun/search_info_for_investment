@@ -140,6 +140,8 @@ class Extract:
                 # 자본총계
                 equity[j] = self.__check_index_error(report, condition3)
 
+
+
                 # 매출액 계산
                 if stock_code == '003550':  # LG의 경우, 매출이 쪼개져있으므로 매출원가 + 매출총이익을 더한다.
                     revenue[j] = self.__check_index_error(report, CONDITION.get_condition11(report)) + \
@@ -177,6 +179,11 @@ class Extract:
                 capex[j] = self.__check_index_error(report, condition15)
                 # 자산총계
                 total_assets[j] = self.__check_index_error(report, condition10)
+
+                # 계정에서 자본과부채의 총계 등으로 표현되는 경우, 순수 자본총계를 구할 수가 없어서 에러핸들링이 됨.
+                # 이때는 자산총계에서 부채총계를 뺴는 것으로 자본총계를 구해줄 수 있음.
+                if equity[j] == -1:
+                    equity[j] = total_assets[j] - liabilities[j]
 
                 if report_name == '11013':  # 1분기
                     date_month = '03'
