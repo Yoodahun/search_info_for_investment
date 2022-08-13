@@ -1,5 +1,18 @@
+from array import array
+
 import pandas as pd
 
+
+
+def filtering_data_that_specific_data(code_list:array, data:pd.DataFrame):
+    """
+    특정 기업만을 추출함.
+    :param code_list:
+    :param data:
+    :return:
+    """
+
+    return data[data['종목코드'].isin(code_list)]
 
 def filtering_data_that_market_cap_under(percent:float, data: pd.DataFrame):
     """
