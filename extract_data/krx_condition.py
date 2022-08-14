@@ -133,7 +133,9 @@ def get_condition14(df):
     return ((df.sj_nm == '손익계산서') | (df.sj_nm == '포괄손익계산서')) & (df.account_nm == 'II.재료비')  # 008770 매출총이익 계산하기 위한 것
 
 def get_condition15(df):
+    # 유형자산의 증가
     return (df.sj_nm == '현금흐름표') & ((df.account_nm == '유형자산의 증가') | (df.account_nm == '유형자산의증가') |
                                     (df.account_nm == '　유형자산의 취득') | (df.account_nm == '　유형자산의취득') |
-                                    (df.account_nm == '유형자산의취득') | (df.account_nm == '유형자산의 취득')
+                                    (df.account_nm == '유형자산의취득') | (df.account_nm == '유형자산의 취득') |
+                                    (df.account_nm == '유형자산 취득')
                                     )
