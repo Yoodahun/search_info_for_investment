@@ -37,7 +37,7 @@ def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
     df = df[df["PER"] > 0]
 
     return (sheet_name,
-            df[df["PER"] <= 10.0].sort_values(by=["PER"], ascending=True))
+            df[df["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
 
 
 def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFrame, all_data=False):
@@ -64,7 +64,7 @@ def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFra
     df2["Total_rank"] = df2["PBR rank"] + df2["PER rank"]
 
     return (sheet_name,
-            df2.sort_values(by=['Total_rank', '종목코드'], ascending=[True, True]).reset_index(
+            df2.sort_values(by=['연도', 'Total_rank', '종목코드'], ascending=[False, True, True]).reset_index(
                 drop=True)
             )
 
@@ -87,7 +87,7 @@ def filtering_low_psr_and_per(sheet_name, per: float, df: pd.DataFrame):
     df2["Total_rank"] = df2["PSR rank"] + df2["PER rank"]
 
     return (sheet_name,
-            df2.sort_values(by=['연도', 'Total_rank'], ascending=[True, True]).reset_index(
+            df2.sort_values(by=['연도', 'Total_rank'], ascending=[False, True]).reset_index(
                 drop=True)
             )
 
