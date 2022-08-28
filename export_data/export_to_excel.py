@@ -13,7 +13,6 @@ class ExportToData:
 
         writer.save()
 
-    # TODO export to excel
     def export_to_excel_with_many_sheets(self, file_path, files: array):
         print("Exporting result to excel file.....")
         writer = self.pandas.ExcelWriter(file_path, engine='openpyxl')
