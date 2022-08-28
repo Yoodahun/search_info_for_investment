@@ -56,7 +56,10 @@ def get_condition6(df):
             (df.account_nm == '영업손실(이익)') | (df.account_nm == '영업손익') |
             (df.account_nm == '계속영업이익(손실)') | (df.account_nm == 'Ⅳ.영업이익') |
             (df.account_nm == 'VI.영업이익(손실)') | (df.account_nm == 'V.영업이익') | (df.account_nm == 'V. 영업이익(손실)') |
-            (df.account_nm == 'IV. 영업이익') | (df.account_nm == '영업이익 (손실)') | (df.account_nm == '영업손실'))
+            (df.account_nm == 'IV. 영업이익') | (df.account_nm == '영업이익 (손실)') | (df.account_nm == '영업손실') |
+            (df.account_nm == 'IV. 영업이익(손실)')
+            )
+
 
 
 def get_condition7(df):
@@ -70,9 +73,9 @@ def get_condition7(df):
             (df.account_nm == 'VIII.당기순이익(손실)') | (df.account_nm == 'XIII. 당기순이익(손실)') | (
                     df.account_nm == '반기연결순이익(손실)') |
             (df.account_nm == '연결당기순이익(손실)') | (df.account_nm == '당기의 순이익') | (df.account_nm == '분기기순이익(손실)') |
-            (df.account_nm == '분기순손익') | (df.account_nm == '분기순손실') | (df.account_nm == '반기순손익') | (
-                    df.account_nm == '분기연결순손실') |
-            (df.account_nm == '분기연결순이익(손실)'))
+            (df.account_nm == '분기순손익') | (df.account_nm == '분기순손실') | (df.account_nm == '반기순손익') | (df.account_nm == '분기연결순손실') |
+            (df.account_nm == '분기연결순이익(손실)') | (df.account_nm == 'VI. 당기순이익(손실)')
+            )
 
 
 # 현금흐름표 부분
