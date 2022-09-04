@@ -250,6 +250,7 @@ class Extract:
         # 분기별 PBR
         df['분기 PBR'] = np.nan
         df['분기 PEG'] = np.nan
+        df['PGPR'] = np.nan
         df['PSR'] = np.nan
         df['GP/A'] = np.nan
         df['POR'] = np.nan
@@ -281,6 +282,11 @@ class Extract:
                 df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
                         df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
                         df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
+
+                # PGPR : 시가총액 / 매출총이익
+                df_finance.loc[i, "PGPR"] = df_finance.iloc[i]['시가총액'] / (
+                        df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
+                        df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익'])
 
                 # POR : 시가총액 / 영업이익
                 df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
@@ -339,7 +345,8 @@ class Extract:
                 '당기순이익 증가율'] = abs(
                 df_finance['당기순이익 증가율'])
 
-            ## 영업이익률 / 당기순이익률
+            ## 매출총이익률 / 영업이익률 / 당기순이익률
+            df_finance['매출총이익률'] = (df_finance['매출총이익'] / df_finance['매출액']) * 100
             df_finance['영업이익률'] = (df_finance['영업이익'] / df_finance['매출액']) * 100
             df_finance['당기순이익률'] = (df_finance['당기순이익'] / df_finance['매출액']) * 100
 
@@ -370,10 +377,12 @@ class Extract:
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액', '분기 PER', '분기 PBR', '분기 ROE', '분기 PEG', 'GP/A', 'PSR', 'POR', 'PCR', 'PFCR',
-                     'NCAV/MC']
+            columns=['종목코드', '연도', '시가총액',
+                     '분기 PBR', 'PSR', 'PGPR', 'POR', '분기 PER', '분기 PEG', 'PCR', 'PFCR',
+                     '분기 ROE', 'GP/A', 'NCAV/MC'
+                     ]
                     + self.indicators
-                    + ['부채비율', '영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률', '당기순이익 증가율', status[2]]
+                    + ['부채비율', '매출총이익률', '영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률', '당기순이익 증가율', status[2]]
         )
 
     def __str_to_float(self, value):
