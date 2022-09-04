@@ -165,7 +165,7 @@ def filtering_peg(sheet_name, df: pd.DataFrame):
     """
     PEG, PER/이익 성장률
     최근분기 데이터로 계산
-    :param pbr:
+    :param sheent_name:
     :param df:
     :return:
     """
