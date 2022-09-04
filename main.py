@@ -39,6 +39,7 @@ exporter.export_to_excel_with_many_sheets(
         filter_data.filtering_profit_momentum("소형주_모멘텀_전분기대비_영업이익순이익_전략", extracted_data.copy()),
         filter_data.filtering_value_and_profit_momentum("소형주_밸류모멘텀_전략", extracted_data.copy()),
         filter_data.filtering_value_factor("소형주_HIGH_SCORE_Four_value", extracted_data.copy()),
+        filter_data.filtering_value_factor3("소형주_5가지_팩터순위합계", extracted_data.copy()),
         filter_data.filtering_value_factor2("소형주_10가지_팩터순위합계", extracted_data.copy()),
         filter_data.filtering_value_factor_upgrade("소형주_강환국_슈퍼가치전략_업글", extracted_data.copy()),
         # filter_data.filtering_value_and_quality("소형주_저PBR_고GPA_자산성장률계산", 1.0, extracted_data.copy()),
