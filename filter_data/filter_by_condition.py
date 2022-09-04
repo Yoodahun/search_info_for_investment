@@ -163,7 +163,7 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
 
 def filtering_peg(sheet_name, df: pd.DataFrame):
     """
-    PEG
+    PEG, PER/이익 성장률
     최근분기 데이터로 계산
     :param pbr:
     :param df:
