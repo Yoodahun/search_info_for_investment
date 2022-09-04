@@ -94,14 +94,13 @@ class Extract:
                           '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
 
         data = []
-        record = []
 
         for j, report_name in enumerate(self.report_code):
             time.sleep(0.1)
             # 연결 재무제표 불러오기
             try:
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
-            except SSLError:
+            except SSLError: # 재시도
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
 
 
@@ -165,7 +164,7 @@ class Extract:
                 income[j] = self.__check_index_error(report, condition6)
 
                 # 당기순이익
-                if stock_code == '008600':
+                if stock_code == '008600': # 법인세 차감전 금액에서 법인세 비용을 차감
                     net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(
                         report)) - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
@@ -299,8 +298,7 @@ class Extract:
                         df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
 
                 # ROE : 당기순이익 / 자본총계
-                df_finance.loc[i, "분기 ROE"] = ((
-                                                       df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2][
+                df_finance.loc[i, "분기 ROE"] = ((df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2][
                                                    '당기순이익'] +
                                                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익']) /
                                                df_finance.iloc[i]['자본총계']) * 100
