@@ -249,9 +249,9 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
 def filtering_value_factor2(sheet_name, df: pd.DataFrame):
     """
     아래의 높은순 랭크
-    - EPS , ROE, 영업이익률, 순이익률
+    - ROE, 영업이익률, 순이익률
     아래 낮은 순 랭크
-    - 분기 PER, PBR, PCR, PSR, POR, PFCR
+    - 분기 PER, PBR, PCR, PSR, POR, PFCR, PGPR
 
     분기 PER값을 사용
     :param df:
@@ -263,20 +263,20 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["EPS rank"] = df.groupby("연도")["EPS"].rank(ascending=False)
+
     df["ROE rank"] = df.groupby("연도")["분기 ROE"].rank(ascending=False)
     df["영업이익률 rank"] = df.groupby("연도")["영업이익률"].rank(ascending=False)
     df["순이익률 rank"] = df.groupby("연도")["당기순이익률"].rank(ascending=False)
 
-    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
-    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
-    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True)
-    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
-    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True)
-    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True) # 기업 가치
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True) # 순자산
+    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True) # 영업활동 현금흐름
+    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True) #잉여 현금흐름
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True) # 매출
+    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True) #영업이익
+    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) #메츨총이익
 
     df["Total Value score"] = \
-        df["EPS rank"] + \
         df["ROE rank"] + \
         df["영업이익률 rank"] + \
         df["순이익률 rank"] + \
@@ -285,7 +285,36 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         df["PCR rank"] + \
         df["PSR rank"] + \
         df["POR rank"] + \
-        df["PFCR rank"]
+        df["PFCR rank"] + \
+        df["PGPR rank"]
+    return (sheet_name,
+            df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
+                drop=True)
+            )
+
+def filtering_value_factor3(sheet_name, df: pd.DataFrame):
+    """
+    PBR, PER, PGPR, PSR, POR의 합게 점수값이 낮은 순.
+    분기 PER값을 사용
+    :param df:
+    :return:
+    """
+
+    df.drop(
+        df[df["분기 PER"] <= 0].index,
+        inplace=True
+    )
+
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True) #기업 가치
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True) # 매출
+    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) #매출총이익
+    df["POR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) # 영업이익
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True) #순자산
+    df["PEG rank"] = df.groupby("연도")["분기 PEG"].rank(ascending=True)  # 순자산의 성장률
+
+
+    df["Total Value score"] = df["PBR rank"] + df["PSR rank"] + df["PGPR rank"]+ df["POR rank"]+ df["PER rank"] + df["PEG rank"]
+
     return (sheet_name,
             df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
