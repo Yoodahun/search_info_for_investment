@@ -3,8 +3,7 @@ from array import array
 import pandas as pd
 
 
-
-def filtering_data_that_specific_data(code_list:array, data:pd.DataFrame):
+def filtering_data_that_specific_data(code_list: array, data: pd.DataFrame):
     """
     특정 기업만을 추출함.
     :param code_list:
@@ -14,7 +13,8 @@ def filtering_data_that_specific_data(code_list:array, data:pd.DataFrame):
 
     return data[data['종목코드'].isin(code_list)]
 
-def filtering_data_that_market_cap_under(percent:float, data: pd.DataFrame):
+
+def filtering_data_that_market_cap_under(percent: float, data: pd.DataFrame):
     """
     코스피, 코스닥의 종목에서 시가총액 30%이하의 종목으로 필터함.
     이 때, 기업소재지가 외국, 스팩주, 우선주, 최신거래일에 거래량이 0인 종목은 제거함.
@@ -26,7 +26,7 @@ def filtering_data_that_market_cap_under(percent:float, data: pd.DataFrame):
     return data[data["시가총액"] <= data["시가총액"].quantile(q=percent)].sort_values(by=["시가총액"], ascending=True)
 
 
-def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
+def filtering_low_per(sheet_name, df_copied: pd.DataFrame, all_data=False):
     """
     전체 데이터중 조회시점을 기준으로 PER가 10 이하인 기업.
     :param data:
@@ -36,7 +36,11 @@ def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
     df = drop_column(df_copied)
     df = df[df["PER"] > 0]
 
-    return (sheet_name,
+    if all_data:
+        return (sheet_name,
+                df[df["PER"] <= 10.0].sort_values(by=["PER"], ascending=[True]))
+    else:
+        return (sheet_name,
             df[df["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
 
 
@@ -64,7 +68,7 @@ def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFra
     df2["Total_rank"] = df2["PBR rank"] + df2["PER rank"]
 
     return (sheet_name,
-            df2.sort_values(by=['연도', 'Total_rank', '종목코드'], ascending=[False, True, True]).reset_index(
+            df2.sort_values(by=['Total_rank', '종목코드'], ascending=[True, True]).reset_index(
                 drop=True)
             )
 
@@ -161,6 +165,7 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
                 drop=True)
             )
 
+
 def filtering_peg(sheet_name, df: pd.DataFrame):
     """
     PEG, PER/이익 성장률
@@ -175,11 +180,9 @@ def filtering_peg(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-
     peg_condition = (df['분기 PEG'] < 1.2)
 
     df2 = df[peg_condition]
-
 
     return (sheet_name,
             df2.sort_values(by=['연도', '분기 PEG'], ascending=[False, True]).reset_index(
@@ -223,6 +226,7 @@ def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
 def filtering_value_factor(sheet_name, df: pd.DataFrame):
     """
     PBR, PER, PCR, PSR의 합게 점수값이 낮은 순.
+    강환국 슈퍼 가치전략
     분기 PER값을 사용
     :param df:
     :return:
@@ -263,18 +267,17 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-
     df["ROE rank"] = df.groupby("연도")["분기 ROE"].rank(ascending=False)
     df["영업이익률 rank"] = df.groupby("연도")["영업이익률"].rank(ascending=False)
     df["순이익률 rank"] = df.groupby("연도")["당기순이익률"].rank(ascending=False)
 
-    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True) # 기업 가치
-    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True) # 순자산
-    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True) # 영업활동 현금흐름
-    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True) #잉여 현금흐름
-    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True) # 매출
-    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True) #영업이익
-    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) #메츨총이익
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)  # 기업 가치
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)  # 순자산
+    df["PCR rank"] = df.groupby("연도")["PCR"].rank(ascending=True)  # 영업활동 현금흐름
+    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)  # 잉여 현금흐름
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)  # 매출
+    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True)  # 영업이익
+    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)  # 메츨총이익
 
     df["Total Value score"] = \
         df["ROE rank"] + \
@@ -292,6 +295,7 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
                 drop=True)
             )
 
+
 def filtering_value_factor3(sheet_name, df: pd.DataFrame):
     """
     PBR, PER, PGPR, PSR, POR의 합게 점수값이 낮은 순.
@@ -305,15 +309,15 @@ def filtering_value_factor3(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True) #기업 가치
-    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True) # 매출
-    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) #매출총이익
-    df["POR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True) # 영업이익
-    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True) #순자산
+    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)  # 기업 가치
+    df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)  # 매출
+    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)  # 매출총이익
+    df["POR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)  # 영업이익
+    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)  # 순자산
     df["PEG rank"] = df.groupby("연도")["분기 PEG"].rank(ascending=True)  # 순자산의 성장률
 
-
-    df["Total Value score"] = df["PBR rank"] + df["PSR rank"] + df["PGPR rank"]+ df["POR rank"]+ df["PER rank"] + df["PEG rank"]
+    df["Total Value score"] = df["PBR rank"] + df["PSR rank"] + df["PGPR rank"] + df["POR rank"] + df["PER rank"] + df[
+        "PEG rank"]
 
     return (sheet_name,
             df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
