@@ -63,7 +63,7 @@ class Extract:
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
-            time.sleep(0.15)
+            # time.sleep(0.15)
 
         df_financial = pd.DataFrame(data, columns=self.financial_column_header)
 
@@ -89,7 +89,7 @@ class Extract:
 
         market_cap = [0, 0, 0, 0]  # 시가 총액
         date_year = str(year)  # 년도 변수 지정
-        quarter = 0 # 분기
+        quarter = 0  # 분기
 
         no_report_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
                           '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
@@ -104,8 +104,6 @@ class Extract:
             except SSLError:  # 재시도
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
 
-
-
             today = datetime.today().date()
 
             # 각 분기별 재무제표를 불러올때, 아직 안나왔다면 그냥 재무제표계산을 중단하기.
@@ -117,10 +115,11 @@ class Extract:
                 if report_name == "11011" and today.month <= 12:  # 4분기
                     break
 
-            if report is None:  # 리포트가 없다면
+            if report is None:  # 리포트가 없다면 반복문 종료하기
                 continue
 
             else:
+                # 조건들에 대해 추출하기
                 condition1 = CONDITION.get_condition1(report)
                 condition2 = CONDITION.get_condition2(report)
                 condition3 = CONDITION.get_condition3(report)
@@ -151,11 +150,11 @@ class Extract:
                 if stock_code == '011810':  # 매출총이익 항목이 없는 회사도 있다. 이 경우, 매출액 - 매출원가로 계산.
                     grossProfit[j] = revenue[j] - self.__check_index_error(report,
                                                                            CONDITION.get_condition11(report))
-                elif stock_code in no_report_list:  # 매출총이익도 없고 이를 계산할 매출원가도 없다.
-                    grossProfit[j] = 1
                 elif stock_code == '008770':
                     grossProfit[j] = revenue[j] - self.__check_index_error(report,
                                                                            CONDITION.get_condition14(report))
+                elif stock_code in no_report_list:  # 매출총이익도 없고 이를 계산할 매출원가도 없다.
+                    grossProfit[j] = -1
                 else:
                     grossProfit[j] = self.__check_index_error(report, condition5)
 
@@ -171,8 +170,8 @@ class Extract:
 
                 # 당기순이익
                 if stock_code == '008600':  # 법인세 차감전 금액에서 법인세 비용을 차감
-                    net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(
-                        report)) - self.__check_index_error(report, CONDITION.get_condition13(report))
+                    net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(report))\
+                                    - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
 
@@ -260,7 +259,7 @@ class Extract:
         :return Dataframe:
         """
         df.sort_values(by=['종목코드', '연도'], inplace=True)
-        print(df)
+        # print(df)
 
         # 분기별 PER
         df['분기 PER'] = np.nan
@@ -365,7 +364,7 @@ class Extract:
             df_finance['당기순이익률'] = (df_finance[three_indicators[2]] / df_finance[three_indicators[0]]) * 100
 
             # 분기열 삭제
-            df_finance.drop(['분기'],axis=1)
+            df_finance.drop(['분기'], axis=1)
 
             # 정렬 순서를 다시 바꿈. 과거 -> 현재순으로.
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
@@ -394,7 +393,7 @@ class Extract:
             ## 기존 데이터프레임 하단에 종목별로 정제데이터들을 붙이기.
             df_temp = pd.concat([df_finance, df_temp])
 
-        ### reindexing columns and return
+        ### 데이터들의 헤더 순서를 다시 지정해준다.
         return df_temp.reindex(
             columns=[
                         '종목코드', '연도', '시가총액',
