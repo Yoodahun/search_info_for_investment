@@ -179,6 +179,10 @@ def filtering_peg(sheet_name, df: pd.DataFrame):
         df[df["부채비율"] >= 400.0].index,
         inplace=True
     )
+    df.drop(
+        df[df["분기 PEG"] <= 0].index,
+        inplace=True
+    )
 
     peg_condition = (df['분기 PEG'] < 1.2)
 
@@ -234,6 +238,14 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
 
     df.drop(
         df[df["분기 PER"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PSR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PCR"] <= 0].index,
         inplace=True
     )
 
@@ -338,6 +350,30 @@ def filtering_value_factor3(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
+    df.drop(
+        df[df["PCR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PSR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["POR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PGPR"] <= 0].index,
+        inplace=True
+    )
+
+    df.drop(
+        df[df["YoY 당기순이익 증가율"] <= 0].index,
+        inplace=True
+    )
+
+
+
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)  # 기업 가치
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)  # 매출
     df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)  # 매출총이익
@@ -369,6 +405,15 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
         df[df["분기 PER"] <= 0].index,
         inplace=True
     )
+    df.drop(
+        df[df["PFCR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PSR"] <= 0].index,
+        inplace=True
+    )
+
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
     df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
@@ -474,8 +519,8 @@ def filtering_profit_momentum(sheet_name, df: pd.DataFrame):
     :return:
     """
 
-    df["당기영업이익 성장률 순위"] = df.groupby("연도")["영업이익 증가율"].rank(method='min', ascending=False)
-    df["당기순이익 성장률 순위"] = df.groupby("연도")["당기순이익 증가율"].rank(method='min', ascending=False)
+    df["당기영업이익 성장률 순위"] = df.groupby("연도")["QoQ 영업이익 증가율"].rank(method='min', ascending=False)
+    df["당기순이익 성장률 순위"] = df.groupby("연도")["QoQ 당기순이익 증가율"].rank(method='min', ascending=False)
 
     df["모멘텀 순위"] = df["당기영업이익 성장률 순위"] + df["당기순이익 성장률 순위"]
 
@@ -499,6 +544,18 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
 
     df.drop(
         df[df["분기 PER"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["분기 PER"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PCR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PSR"] <= 0].index,
         inplace=True
     )
 
