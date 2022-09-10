@@ -274,6 +274,7 @@ class Extract:
 
         status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
         three_indicators = ['매출액', '영업이익', '당기순이익']
+        three_indicators_status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
         three_qoq_growth_indicators = ['QoQ 매출액 증가율', 'QoQ 영업이익 증가율', 'QoQ 당기순이익 증가율']
         three_yoy_growth_indicators = ['YoY 매출액 증가율', 'YoY 영업이익 증가율', 'YoY 당기순이익 증가율']
 
@@ -374,23 +375,23 @@ class Extract:
 
             ## 매출액, 영업이익, 당기순이익 확인 지표
             ## 이전 분기의 값과 비교하여 흑자인지 적자인지를 판단.
-            for i in range(len(status)):
-                df_finance[status[i]] = np.nan
+            for i in range(len(three_indicators_status)):
+                df_finance[three_indicators_status[i]] = np.nan
                 df_finance.loc[
                     (df_finance[three_indicators[i]] > 0) & (df_finance[three_indicators[i]].shift(-1) <= 0),
-                    status[i]
+                    three_indicators_status[i]
                 ] = "흑자 전환"
                 df_finance.loc[
                     (df_finance[three_indicators[i]] <= 0) & (df_finance[three_indicators[i]].shift(-1) > 0),
-                    status[i]
+                    three_indicators_status[i]
                 ] = "적자 전환"
                 df_finance.loc[
                     (df_finance[three_indicators[i]] > 0) & (df_finance[three_indicators[i]].shift(-1) > 0),
-                    status[i]
+                    three_indicators_status[i]
                 ] = "흑자 지속"
                 df_finance.loc[
                     (df_finance[three_indicators[i]] <= 0) & (df_finance[three_indicators[i]].shift(-1) <= 0),
-                    status[i]
+                    three_indicators_status[i]
                 ] = "적자 지속"
 
             ## 기존 데이터프레임 하단에 종목별로 정제데이터들을 붙이기.
@@ -404,9 +405,9 @@ class Extract:
                      ]
                     + self.indicators
                     + [
-                        '부채비율', '매출총이익률',  three_qoq_growth_indicators[0], three_yoy_growth_indicators[0], status[0],
-                        '영업이익률', three_qoq_growth_indicators[1], three_yoy_growth_indicators[1], status[1],
-                        '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2], status[2]
+                        '부채비율', '매출총이익률',  three_qoq_growth_indicators[0], three_yoy_growth_indicators[0], three_indicators_status[0],
+                        '영업이익률', three_qoq_growth_indicators[1], three_yoy_growth_indicators[1], three_indicators_status[1],
+                        '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2], three_indicators_status[2]
                     ]
 
         )
