@@ -266,10 +266,36 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         df[df["분기 PER"] <= 0].index,
         inplace=True
     )
+    df.drop(
+        df[df["PCR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PSR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["POR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PGPR"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["YoY 영업이익 증가율"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["YoY 당기순이익 증가율"] <= 0].index,
+        inplace=True
+    )
 
     df["ROE rank"] = df.groupby("연도")["분기 ROE"].rank(ascending=False)
     df["영업이익률 rank"] = df.groupby("연도")["영업이익률"].rank(ascending=False)
     df["순이익률 rank"] = df.groupby("연도")["당기순이익률"].rank(ascending=False)
+    df["YoY 영업이익 증가율 rank"] = df.groupby("연도")["YoY 영업이익 증가율"].rank(ascending=False)
+    df["YoY 당기순이익 증가율 rank"] = df.groupby("연도")["YoY 당기순이익 증가율"].rank(ascending=False)
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)  # 기업 가치
     df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)  # 순자산
@@ -289,7 +315,10 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         df["PSR rank"] + \
         df["POR rank"] + \
         df["PFCR rank"] + \
-        df["PGPR rank"]
+        df["PGPR rank"] + \
+        df["YoY 영업이익 증가율 rank"] + \
+        df["YoY 당기순이익 증가율 rank"]
+
     return (sheet_name,
             df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
