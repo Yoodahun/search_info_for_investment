@@ -36,7 +36,7 @@ class Extract:
             '잉여현금흐름'
         ]
 
-        self.financial_column_header = ["종목코드", "연도", "시가총액"] + self.indicators
+        self.financial_column_header = ["종목코드", "연도", "시가총액", "분기"] + self.indicators
 
     def get_data(self):
         print(f"Getting data from KRX")
@@ -89,6 +89,7 @@ class Extract:
 
         market_cap = [0, 0, 0, 0]  # 시가 총액
         date_year = str(year)  # 년도 변수 지정
+        quarter = 0 # 분기
 
         no_report_list = ['035420', '035720', '036570', '017670', '251270', '263750', '030200', '293490',
                           '112040', '259960', '032640', '180640', '058850']  # 매출총이익 계산 못하는 회사들
@@ -160,6 +161,13 @@ class Extract:
                 else:
                     grossProfit[j] = self.__check_index_error(report, condition5)
 
+                # 매출총이익이 에러핸들링으로 인해서 -1인 경우.
+                # 특히 IT 서비스 몇몇 기업의 경우 매출총이익항목이 별도로 없고 재료비 항목도 없다.
+                # 이 경우에는 그냥 매출액을 매출총이익으로 넣어준다.
+                # 예시로 네이버증권에서 NAVER 항목에 대해서 참조.
+                if grossProfit[j] == -1:
+                    grossProfit[j] = revenue[j]
+
                 # 영업이익
                 income[j] = self.__check_index_error(report, condition6)
 
@@ -187,6 +195,7 @@ class Extract:
                 if report_name == '11013':  # 1분기
                     date_month = '03'
                     date_day = 31  # 일만 계산할꺼니까 이것만 숫자로 지정
+                    quarter = 1
 
                 elif report_name == '11012':  # 2분기
                     date_month = '06'
@@ -194,6 +203,7 @@ class Extract:
                     cfo[j] = cfo[j] - cfo[j - 1]  # 현금흐름은 2분기부터 시작
                     # cfi[j] = cfi[j] - cfi[j - 1]  # 현금흐름은 2분기부터 시작
                     capex[j] = capex[j] - capex[j - 1]
+                    quarter = 2
 
                 elif report_name == '11014':  # 3분기
                     date_month = '09'
@@ -201,6 +211,7 @@ class Extract:
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2])
                     # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2])
                     capex[j] = capex[j] - (capex[j - 1] + capex[j - 2])
+                    quarter = 3
 
                 else:  # 4분기. 1 ~ 3분기 데이터를 더한다음 사업보고서에서 빼야 함
                     date_month = '12'
@@ -212,6 +223,7 @@ class Extract:
                     cfo[j] = cfo[j] - (cfo[j - 1] + cfo[j - 2] + cfo[j - 3])
                     # cfi[j] = cfi[j] - (cfi[j - 1] + cfi[j - 2] + cfo[j - 3])
                     capex[j] = capex[j] - (capex[j - 1] + capex[j - 2] + capex[j - 3])
+                    quarter = 4
 
                 # 잉여현금흐름
                 fcf[j] = (cfo[j] - capex[j])
@@ -233,7 +245,7 @@ class Extract:
                 # TODO
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
-                record = [stock_code, date_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
+                record = [stock_code, date_string, market_cap[j], quarter, current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
                           fcf[j]]
@@ -259,29 +271,37 @@ class Extract:
         df['NCAV/MC'] = np.nan
         df['분기 ROE'] = np.nan
 
-        status = ['영업이익 상태', '매출액 상태', '당기순이익 상태']
-        three_indicators = ['영업이익', '매출액', '당기순이익']
+
+        status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
+        three_indicators = ['매출액', '영업이익', '당기순이익']
+        three_qoq_growth_indicators = ['QoQ 매출액 증가율', 'QoQ 영업이익 증가율', 'QoQ 당기순이익 증가율']
+        three_yoy_growth_indicators = ['YoY 매출액 증가율', 'YoY 영업이익 증가율', 'YoY 당기순이익 증가율']
+
 
         df_temp = pd.DataFrame(columns=df.columns)
 
+        # 전체 데이터들 중에 종목코드만 추출해서 배열로 만듦.
         corp_ticker = df.loc[:, ["종목코드"]].drop_duplicates().values.tolist()
 
         for row in corp_ticker:
             if row is None:
                 continue
             print(f"Calculating {row[0]} factor indicators")
+            # 종목코드별로 반복문이 실행됨.
             df_finance = df[df["종목코드"] == row[0]].reset_index()
 
+            # 종목이 가진 데이터길이 만큼 반복. 3부터 시작하는 이유는, 4개분기 데이터로 계산하는 데이터때문에.
+            # 과거 데이터를 참조해야하는데, 최초 3개 데이터까지는 참조할 데이터가 없음.
             for i in range(3, len(df_finance)):
                 # PER : 시가총액 / 당기 순이익
                 df_finance.loc[i, "분기 PER"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2]['당기순이익'] +
-                        df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익'])
+                        df_finance.iloc[i - 3][three_indicators[2]] + df_finance.iloc[i - 2][three_indicators[2]] +
+                        df_finance.iloc[i - 1][three_indicators[2]] + df_finance.iloc[i][three_indicators[2]])
 
                 # PSR : 시가총액 / 매출액
                 df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['매출액'] + df_finance.iloc[i - 2]['매출액'] +
-                        df_finance.iloc[i - 1]['매출액'] + df_finance.iloc[i]['매출액'])
+                        df_finance.iloc[i - 3][three_indicators[0]] + df_finance.iloc[i - 2][three_indicators[0]] +
+                        df_finance.iloc[i - 1][three_indicators[0]] + df_finance.iloc[i][three_indicators[0]])
 
                 # PGPR : 시가총액 / 매출총이익
                 df_finance.loc[i, "PGPR"] = df_finance.iloc[i]['시가총액'] / (
@@ -290,8 +310,8 @@ class Extract:
 
                 # POR : 시가총액 / 영업이익
                 df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['영업이익'] + df_finance.iloc[i - 2]['영업이익'] +
-                        df_finance.iloc[i - 1]['영업이익'] + df_finance.iloc[i]['영업이익'])
+                        df_finance.iloc[i - 3][three_indicators[1]] + df_finance.iloc[i - 2][three_indicators[1]] +
+                        df_finance.iloc[i - 1][three_indicators[1]] + df_finance.iloc[i][three_indicators[1]])
 
                 # PCR : 시가총액 / 영업활동 현금흐름
                 df_finance.loc[i, "PCR"] = df_finance.iloc[i]['시가총액'] / (
@@ -304,9 +324,10 @@ class Extract:
                         df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
 
                 # ROE : 당기순이익 / 자본총계
-                df_finance.loc[i, "분기 ROE"] = ((df_finance.iloc[i - 3]['당기순이익'] + df_finance.iloc[i - 2][
-                                                   '당기순이익'] +
-                                                       df_finance.iloc[i - 1]['당기순이익'] + df_finance.iloc[i]['당기순이익']) /
+                df_finance.loc[i, "분기 ROE"] = ((df_finance.iloc[i - 3][three_indicators[2]] +
+                                                df_finance.iloc[i - 2][three_indicators[2]] +
+                                                df_finance.iloc[i - 1][three_indicators[2]] +
+                                                df_finance.iloc[i][three_indicators[2]]) /
                                                df_finance.iloc[i]['자본총계']) * 100
 
             # PBR : 시가총액 / 자본총계
@@ -322,37 +343,37 @@ class Extract:
             ## 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
 
-            ###영업이익 / 매출액 / 당기순이익 증가율
-            df_finance['영업이익 증가율'] = df_finance['영업이익'].pct_change() * 100
-            df_finance['매출액 증가율'] = df_finance['매출액'].pct_change() * 100
-            df_finance['당기순이익 증가율'] = df_finance['당기순이익'].pct_change() * 100
 
-            # df_finance['영업이익 증가율'] = (df_finance['영업이익'].diff() / df_finance['영업이익'].shift(1)).fillna(
-            #     0) * 100
-            # df_finance['매출액 증가율'] = (df_finance['매출액'].diff() / df_finance['매출액'].shift(1)).fillna(0) * 100
-            # df_finance['당기순이익 증가율'] = (df_finance['당기순이익'].diff() / df_finance['당기순이익'].shift(1)).fillna(
-            #     0) * 100
+
+            ##분기별 매출액 / 영업이익 / 당기순이익 증가율
+            for i in range(0, len(three_indicators)):
+                s = df_finance[three_indicators[i]].shift()
+                df_finance[three_qoq_growth_indicators[i]] = df_finance[three_indicators[i]].sub(s).div(s.abs()) * 100
+
+            ### 전년동기대비 매출액 / 영업이익 / 당기순이익 증가율
+            for i in range(0, len(three_indicators)):
+                s = df_finance.groupby('분기')[three_indicators[i]].shift()
+                df_finance[three_yoy_growth_indicators[i]] = df_finance[three_indicators[i]].sub(s).div(s.abs()) * 100
 
             # PEG : PER / 당기순이익 증가율
-            df_finance["분기 PEG"] = df_finance['분기 PER'] / df_finance['당기순이익 증가율']
+            df_finance["분기 PEG"] = df_finance['분기 PER'] / df_finance[three_qoq_growth_indicators[2]]
 
-
-            if (df_finance['영업이익'].shift(1) < 0).any() & (df_finance['영업이익'] > 0).any(): df_finance['영업이익 증가율'] = abs(
-                df_finance['영업이익 증가율'])
-            if (df_finance['매출액'].shift(1) < 0).any() & (df_finance['매출액'] > 0).any(): df_finance['매출액 증가율'] = abs(
-                df_finance['매출액 증가율'])
-            if (df_finance['당기순이익'].shift(1) < 0).any() & (df_finance['당기순이익'] > 0).any(): df_finance[
-                '당기순이익 증가율'] = abs(
-                df_finance['당기순이익 증가율'])
 
             ## 매출총이익률 / 영업이익률 / 당기순이익률
-            df_finance['매출총이익률'] = (df_finance['매출총이익'] / df_finance['매출액']) * 100
-            df_finance['영업이익률'] = (df_finance['영업이익'] / df_finance['매출액']) * 100
-            df_finance['당기순이익률'] = (df_finance['당기순이익'] / df_finance['매출액']) * 100
+            df_finance['매출총이익률'] = (df_finance['매출총이익'] / df_finance[three_indicators[0]]) * 100
+            df_finance['영업이익률'] = (df_finance[three_indicators[1]] / df_finance[three_indicators[0]]) * 100
+            df_finance['당기순이익률'] = (df_finance[three_indicators[2]] / df_finance[three_indicators[0]]) * 100
 
+            # 분기열 삭제
+            df_finance.drop(['분기'],axis=1)
+
+            # 정렬 순서를 다시 바꿈. 과거 -> 현재순으로.
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
 
-            ## 영업이익, 매출액, 당기순이익 확인 지표
+
+
+            ## 매출액, 영업이익, 당기순이익 확인 지표
+            ## 이전 분기의 값과 비교하여 흑자인지 적자인지를 판단.
             for i in range(len(status)):
                 df_finance[status[i]] = np.nan
                 df_finance.loc[
@@ -382,7 +403,12 @@ class Extract:
                      '분기 ROE', 'GP/A', 'NCAV/MC'
                      ]
                     + self.indicators
-                    + ['부채비율', '매출총이익률', '영업이익률', '영업이익 증가율', status[0], '매출액 증가율', status[1], '당기순이익률', '당기순이익 증가율', status[2]]
+                    + [
+                        '부채비율', '매출총이익률',  three_qoq_growth_indicators[0], three_yoy_growth_indicators[0], status[0],
+                        '영업이익률', three_qoq_growth_indicators[1], three_yoy_growth_indicators[1], status[1],
+                        '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2], status[2]
+                    ]
+
         )
 
     def __str_to_float(self, value):

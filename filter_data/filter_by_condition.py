@@ -473,8 +473,8 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-    df["당기영업이익 성장률 순위"] = df.groupby("연도")["영업이익 증가율"].rank(method='min', ascending=False)
-    df["당기순이익 성장률 순위"] = df.groupby("연도")["당기순이익 증가율"].rank(method='min', ascending=False)
+    df["당기영업이익 성장률 순위"] = df.groupby("연도")["QoQ 영업이익 증가율"].rank(method='min', ascending=False)
+    df["당기순이익 성장률 순위"] = df.groupby("연도")["QoQ 당기순이익 증가율"].rank(method='min', ascending=False)
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
     df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
