@@ -412,19 +412,6 @@ class Extract:
 
         )
 
-    def __str_to_float(self, value):
-        """
-        문자열로된 숫자를 소수점으로 변환.
-        :param value:
-        :return: float or integer
-        """
-        if type(value) is float:
-            return value
-        elif value == '-':
-            return 0
-        else:
-            return int(value.replace(',', ''))
-
     def __check_weekend(self, date_year, date_month, date_day):
         """
         주말인지 아닌지를 판단.
