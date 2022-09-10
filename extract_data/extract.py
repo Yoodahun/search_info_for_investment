@@ -101,13 +101,14 @@ class Extract:
             # 연결 재무제표 불러오기
             try:
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
-            except SSLError: # 재시도
+            except SSLError:  # 재시도
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
 
 
 
             today = datetime.today().date()
 
+            # 각 분기별 재무제표를 불러올때, 아직 안나왔다면 그냥 재무제표계산을 중단하기.
             if year == today.year:
                 if report_name == "11012" and today.month <= 7:  # 2분기
                     break
@@ -139,7 +140,6 @@ class Extract:
                 # 자본총계
                 equity[j] = self.__check_index_error(report, condition3)
 
-
                 # 매출액 계산
                 if stock_code == '003550':  # LG의 경우, 매출이 쪼개져있으므로 매출원가 + 매출총이익을 더한다.
                     revenue[j] = self.__check_index_error(report, CONDITION.get_condition11(report)) + \
@@ -170,7 +170,7 @@ class Extract:
                 income[j] = self.__check_index_error(report, condition6)
 
                 # 당기순이익
-                if stock_code == '008600': # 법인세 차감전 금액에서 법인세 비용을 차감
+                if stock_code == '008600':  # 법인세 차감전 금액에서 법인세 비용을 차감
                     net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(
                         report)) - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
@@ -249,6 +249,7 @@ class Extract:
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
                           fcf[j]]
 
+            # 각 사업보고서별로 계산한 데이터들을 data 변수에 차곡차곡 넣는다.
             data.append(record)
         return data
 
@@ -279,7 +280,6 @@ class Extract:
         three_indicators_status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
         three_qoq_growth_indicators = ['QoQ 매출액 증가율', 'QoQ 영업이익 증가율', 'QoQ 당기순이익 증가율']
         three_yoy_growth_indicators = ['YoY 매출액 증가율', 'YoY 영업이익 증가율', 'YoY 당기순이익 증가율']
-
 
         df_temp = pd.DataFrame(columns=df.columns)
 
@@ -343,17 +343,15 @@ class Extract:
             df_finance["NCAV/MC"] = (df_finance['유동자산'] - df_finance['부채총계']) / \
                                     df_finance['시가총액'] * 100
 
-            ## 부채 비율
+            # 부채 비율
             df_finance['부채비율'] = (df_finance['부채총계'] / df_finance['자본총계']) * 100
 
-
-
-            ##분기별 매출액 / 영업이익 / 당기순이익 증가율
+            # 분기별 매출액 / 영업이익 / 당기순이익 증가율
             for i in range(0, len(three_indicators)):
                 s = df_finance[three_indicators[i]].shift()
                 df_finance[three_qoq_growth_indicators[i]] = df_finance[three_indicators[i]].sub(s).div(s.abs()) * 100
 
-            ### 전년동기대비 매출액 / 영업이익 / 당기순이익 증가율
+            # 전년동기대비 매출액 / 영업이익 / 당기순이익 증가율
             for i in range(0, len(three_indicators)):
                 s = df_finance.groupby('분기')[three_indicators[i]].shift()
                 df_finance[three_yoy_growth_indicators[i]] = df_finance[three_indicators[i]].sub(s).div(s.abs()) * 100
@@ -361,8 +359,7 @@ class Extract:
             # PEG : PER / 당기순이익 증가율
             df_finance["분기 PEG"] = df_finance['분기 PER'] / df_finance[three_qoq_growth_indicators[2]]
 
-
-            ## 매출총이익률 / 영업이익률 / 당기순이익률
+            # 매출총이익률 / 영업이익률 / 당기순이익률
             df_finance['매출총이익률'] = (df_finance['매출총이익'] / df_finance[three_indicators[0]]) * 100
             df_finance['영업이익률'] = (df_finance[three_indicators[1]] / df_finance[three_indicators[0]]) * 100
             df_finance['당기순이익률'] = (df_finance[three_indicators[2]] / df_finance[three_indicators[0]]) * 100
@@ -373,8 +370,8 @@ class Extract:
             # 정렬 순서를 다시 바꿈. 과거 -> 현재순으로.
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
 
-            ## 매출액, 영업이익, 당기순이익 확인 지표
-            ## 이전 분기의 값과 비교하여 흑자인지 적자인지를 판단.
+            # 매출액, 영업이익, 당기순이익 확인 지표
+            # 이전 분기의 값과 비교하여 흑자인지 적자인지를 판단.
             for i in range(len(three_indicators_status)):
                 df_finance[three_indicators_status[i]] = np.nan
                 df_finance.loc[
@@ -399,15 +396,19 @@ class Extract:
 
         ### reindexing columns and return
         return df_temp.reindex(
-            columns=['종목코드', '연도', '시가총액',
-                     '분기 PBR', 'PSR', 'PGPR', 'POR', '분기 PER', '분기 PEG', 'PCR', 'PFCR',
-                     '분기 ROE', 'GP/A', 'NCAV/MC'
-                     ]
-                    + self.indicators
-                    + [
-                        '부채비율', '매출총이익률',  three_qoq_growth_indicators[0], three_yoy_growth_indicators[0], three_indicators_status[0],
-                        '영업이익률', three_qoq_growth_indicators[1], three_yoy_growth_indicators[1], three_indicators_status[1],
-                        '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2], three_indicators_status[2]
+            columns=[
+                        '종목코드', '연도', '시가총액',
+                        '분기 PBR', 'PSR', 'PGPR', 'POR', '분기 PER', '분기 PEG', 'PCR', 'PFCR',
+                        '분기 ROE', 'GP/A', 'NCAV/MC'
+                    ]
+                    + self.indicators +
+                    [
+                        '부채비율', '매출총이익률', three_qoq_growth_indicators[0], three_yoy_growth_indicators[0],
+                        three_indicators_status[0],
+                        '영업이익률', three_qoq_growth_indicators[1], three_yoy_growth_indicators[1],
+                        three_indicators_status[1],
+                        '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2],
+                        three_indicators_status[2]
                     ]
 
         )
