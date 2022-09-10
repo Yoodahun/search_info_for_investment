@@ -119,7 +119,6 @@ class Extract:
             if report is None:  # 리포트가 없다면
                 continue
 
-
             else:
                 condition1 = CONDITION.get_condition1(report)
                 condition2 = CONDITION.get_condition2(report)
@@ -129,7 +128,7 @@ class Extract:
                 condition6 = CONDITION.get_condition6(report)
                 condition7 = CONDITION.get_condition7(report)
                 condition8 = CONDITION.get_condition8(report)
-                condition9 = CONDITION.get_condition9(report)
+                # condition9 = CONDITION.get_condition9(report)
                 condition10 = CONDITION.get_condition10(report)
                 condition15 = CONDITION.get_condition15(report)
 
@@ -139,7 +138,6 @@ class Extract:
                 liabilities[j] = self.__check_index_error(report, condition2)
                 # 자본총계
                 equity[j] = self.__check_index_error(report, condition3)
-
 
 
                 # 매출액 계산
@@ -225,7 +223,7 @@ class Extract:
                     capex[j] = capex[j] - (capex[j - 1] + capex[j - 2] + capex[j - 3])
                     quarter = 4
 
-                # 잉여현금흐름
+                # 잉여현금흐름 : 영업활동의흐름 - 유형자산의 증가
                 fcf[j] = (cfo[j] - capex[j])
 
                 # 날짜 계산
@@ -245,6 +243,7 @@ class Extract:
                 # TODO
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
+                # 각 데이터들을 순서대로 리스트를 만들어서 record변수에 저장한다.
                 record = [stock_code, date_string, market_cap[j], quarter, current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
@@ -254,6 +253,11 @@ class Extract:
         return data
 
     def __calculate_indicator(self, df):
+        """
+        추출한 재무제표 데이터를 이용해서 팩터데이터 및 참고데이터들을 계산한다.
+        :param df:
+        :return Dataframe:
+        """
         df.sort_values(by=['종목코드', '연도'], inplace=True)
         print(df)
 
@@ -271,8 +275,6 @@ class Extract:
         df['NCAV/MC'] = np.nan
         df['분기 ROE'] = np.nan
 
-
-        status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
         three_indicators = ['매출액', '영업이익', '당기순이익']
         three_indicators_status = ['매출액 상태', '영업이익 상태', '당기순이익 상태']
         three_qoq_growth_indicators = ['QoQ 매출액 증가율', 'QoQ 영업이익 증가율', 'QoQ 당기순이익 증가율']
@@ -370,8 +372,6 @@ class Extract:
 
             # 정렬 순서를 다시 바꿈. 과거 -> 현재순으로.
             df_finance.sort_values(by=['연도'], inplace=True, ascending=False)
-
-
 
             ## 매출액, 영업이익, 당기순이익 확인 지표
             ## 이전 분기의 값과 비교하여 흑자인지 적자인지를 판단.
