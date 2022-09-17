@@ -9,7 +9,8 @@ def get_condition1(df):
 def get_condition2(df):
     # 부채총계
     return (df.sj_nm == '재무상태표') & ((df.account_nm == '부채총계') | (df.account_nm == '부  채  총  계') |
-                                    (df.account_nm == '부채 총계'))  # 부채총계
+                                    (df.account_nm == '부채 총계') | (df.account_nm == '부    채    총    계')
+                                    )  # 부채총계
 
 
 def get_condition3(df):
@@ -19,22 +20,19 @@ def get_condition3(df):
             (df.account_nm == '분기말자본') | (df.account_nm == '1분기말자본') | (df.account_nm == '자  본  총  계') |
             (df.account_nm == '기말') | (df.account_nm == '자본 총계') | (df.account_nm == '기말자본 잔액') |
             (df.account_nm == '분기말') | (df.account_nm == '반기말') | (df.account_nm == '자 본 총 계') |
-            (df.account_nm == '분기말 잔액') | (df.account_nm == '반기말 잔액'))  # 자본총계
+            (df.account_nm == '분기말 잔액') | (df.account_nm == '반기말 잔액') | (df.account_nm == '자    본    총    계')
+            )  # 자본총계
 
 
 def get_condition4(df):
     # 매출액 부분
-    return ((df.sj_nm == '손익계산서') | (df.sj_nm == '포괄손익계산서')) & ((df.account_nm == '매출액') |
-                                                                (df.account_nm == '수익(매출액)') | (
-                                                                        df.account_nm == '매출') | (
-                                                                        df.account_nm == '영업수익') |
-                                                                (df.account_nm == '수익') | (
-                                                                        df.account_nm == '영업수익(매출액)') | (
-                                                                        df.account_nm == 'Ⅰ.매출') |
-                                                                (df.account_nm == 'I.매출액') | (
-                                                                        df.account_nm == 'Ⅰ.매출액') | (
-                                                                        df.account_nm == 'I. 매출액') |
-                                                                (df.account_nm == '매출액(영업수익)'))
+    return ((df.sj_nm == '손익계산서') | (df.sj_nm == '포괄손익계산서')) & (
+            (df.account_nm == '매출액') | (df.account_nm == '수익(매출액)') | (df.account_nm == '매출') |
+            (df.account_nm == '영업수익') |(df.account_nm == '수익') | (df.account_nm == '영업수익(매출액)') |
+            (df.account_nm == 'Ⅰ.매출') |(df.account_nm == 'I.매출액') | (df.account_nm == 'Ⅰ.매출액') |
+            (df.account_nm == 'I. 매출액') | (df.account_nm == '매출액(영업수익)') | (df.account_nm == 'I. 영업수익') |
+            (df.account_nm == 'I. 영업수익')
+    )
 
 
 def get_condition5(df):
@@ -57,7 +55,8 @@ def get_condition6(df):
             (df.account_nm == '계속영업이익(손실)') | (df.account_nm == 'Ⅳ.영업이익') |
             (df.account_nm == 'VI.영업이익(손실)') | (df.account_nm == 'V.영업이익') | (df.account_nm == 'V. 영업이익(손실)') |
             (df.account_nm == 'IV. 영업이익') | (df.account_nm == '영업이익 (손실)') | (df.account_nm == '영업손실') |
-            (df.account_nm == 'IV. 영업이익(손실)')
+            (df.account_nm == 'IV. 영업이익(손실)') | (df.account_nm == '정상영업손익') | (df.account_nm == 'III. 영업손실') |
+            (df.account_nm == 'III. 영업이익') | (df.account_nm == 'III. 영업이익(손실)')
             )
 
 
@@ -74,7 +73,8 @@ def get_condition7(df):
                     df.account_nm == '반기연결순이익(손실)') |
             (df.account_nm == '연결당기순이익(손실)') | (df.account_nm == '당기의 순이익') | (df.account_nm == '분기기순이익(손실)') |
             (df.account_nm == '분기순손익') | (df.account_nm == '분기순손실') | (df.account_nm == '반기순손익') | (df.account_nm == '분기연결순손실') |
-            (df.account_nm == '분기연결순이익(손실)') | (df.account_nm == 'VI. 당기순이익(손실)')
+            (df.account_nm == '분기연결순이익(손실)') | (df.account_nm == 'VI. 당기순이익(손실)') | (df.account_nm == '연결반기순이익(손실)') |
+            (df.account_nm == 'IX. 반기순손실') | (df.account_nm == 'IX. 반기순이익')
             )
 
 
@@ -114,7 +114,9 @@ def get_condition9(df):
 def get_condition10(df):
     # 자산총계
     return (df.sj_nm == '재무상태표') & ((df.account_nm == '자산총계') | (df.account_nm == '자  산  총  계') |
-                                    (df.account_nm == '자산 총계') | (df.account_nm == '자본과부채총계'))  # 자산총계
+                                    (df.account_nm == '자산 총계') | (df.account_nm == '자본과부채총계') |
+                                    (df.account_nm == '자    산    총    계')
+                                    )  # 자산총계
 
 
 def get_condition11(df):
