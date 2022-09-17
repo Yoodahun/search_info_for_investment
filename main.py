@@ -18,14 +18,14 @@ print("--------------")
 # extract and calculating finance data recent 3 years data
 extracted_data = extractor.extract_finance_data(
     [2020, 2021, 2022],
-    filter_data.filtering_data_that_market_cap_under(0.33,
+    filter_data.filtering_data_that_market_cap_under(0.4,
         kospi_kosdaq_data
     ))
 
 exporter.export_to_excel_with_many_sheets(
     f"/Users/yoodahun/Documents/Dahun Document/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_screeningData.xlsx",
     [
-        filter_data.filtering_low_per("ALL_DATA_저PER", kospi_kosdaq_data.copy()),
+        filter_data.filtering_low_per("ALL_DATA_저PER", kospi_kosdaq_data.copy(), True),
         filter_data.filtering_low_pbr_and_per("ALL_DATA_저PBR_저PER", 1.0, 10, kospi_kosdaq_data.copy(), True),
         filter_data.filtering_low_per("소형주_저PER", extracted_data.copy()),
         filter_data.filtering_low_pbr_and_per("소형주_저PBR_저PER", 1.0, 10, extracted_data.copy()),
@@ -37,8 +37,8 @@ exporter.export_to_excel_with_many_sheets(
         filter_data.filtering_low_pbr_and_high_gpa("소형주_저PBR_고GPA", 0.8, extracted_data.copy()),
         filter_data.filtering_high_ncav_cap_and_gpa("소형주_저NCAV_GPA_저부채비율", extracted_data.copy()),
         filter_data.filtering_profit_momentum("소형주_모멘텀_전분기대비_영업이익순이익_전략", extracted_data.copy()),
-        filter_data.filtering_value_and_profit_momentum("소형주_밸류모멘텀_전략", extracted_data.copy()),
-        filter_data.filtering_value_factor("소형주_슈퍼가치전략", extracted_data.copy()),
+        filter_data.filtering_value_factor("소형주_슈퍼가치_4가지_전략", extracted_data.copy()),
+        filter_data.filtering_value_and_profit_momentum("소형주_성장주모멘텀_전략", extracted_data.copy()),
         filter_data.filtering_value_factor3("소형주_6가지_팩터순위합계", extracted_data.copy()),
         filter_data.filtering_value_factor2("소형주_12가지_팩터순위합계", extracted_data.copy()),
         filter_data.filtering_value_factor_upgrade("소형주_강환국_슈퍼가치전략_업글", extracted_data.copy()),
