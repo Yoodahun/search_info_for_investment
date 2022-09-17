@@ -295,6 +295,10 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         inplace=True
     )
     df.drop(
+        df[df["YoY 매출액 증가율"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
         df[df["YoY 영업이익 증가율"] <= 0].index,
         inplace=True
     )
@@ -542,33 +546,24 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     :return:
     """
 
-    df.drop(
-        df[df["분기 PER"] <= 0].index,
-        inplace=True
-    )
-    df.drop(
-        df[df["분기 PER"] <= 0].index,
-        inplace=True
-    )
-    df.drop(
-        df[df["PCR"] <= 0].index,
-        inplace=True
-    )
+
     df.drop(
         df[df["PSR"] <= 0].index,
         inplace=True
     )
 
-    df["당기영업이익 성장률 순위"] = df.groupby("연도")["QoQ 영업이익 증가율"].rank(method='min', ascending=False)
-    df["당기순이익 성장률 순위"] = df.groupby("연도")["QoQ 당기순이익 증가율"].rank(method='min', ascending=False)
+    df["전년도 동기 대비 매출액 성장률 순위"] = df.groupby("연도")["YoY 매출액 증가율"].rank(method='min', ascending=False)
+    df["전년도 동기 대비 영업이익 성장률 순위"] = df.groupby("연도")["YoY 영업이익 증가율"].rank(method='min', ascending=False)
+    df["전년도 동기 대비 당기순이익 성장률 순위"] = df.groupby("연도")["YoY 당기순이익 증가율"].rank(method='min', ascending=False)
 
-    df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
-    df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
-    df["PFCR rank"] = df.groupby("연도")["PFCR"].rank(ascending=True)
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)
+    df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)
+    df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True)
+    df["PEG rank"] = df.groupby("연도")["분기 PEG"].rank(ascending=True)
 
-    df["모멘텀 순위"] = (df["당기영업이익 성장률 순위"] + df["당기순이익 성장률 순위"] + df["PBR rank"] + df["PER rank"] + df["PFCR rank"] + df[
-        "PSR rank"]) / 6
+
+    df["모멘텀 순위"] = (df["전년도 동기 대비 매출액 성장률 순위"] + df["전년도 동기 대비 영업이익 성장률 순위"] + df["전년도 동기 대비 당기순이익 성장률 순위"]
+                    + df["PSR rank"] + df["PGPR rank"] + df["POR rank"] + df["PEG rank"]) / 7
 
     return (sheet_name,
             df.sort_values(by=['연도', '모멘텀 순위'], ascending=[False, True]).reset_index(
