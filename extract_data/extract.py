@@ -170,7 +170,7 @@ class Extract:
 
                 # 당기순이익
                 if stock_code == '008600':  # 법인세 차감전 금액에서 법인세 비용을 차감
-                    net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(report))\
+                    net_income[j] = self.__check_index_error(report, CONDITION.get_condition12(report)) \
                                     - self.__check_index_error(report, CONDITION.get_condition13(report))
                 else:
                     net_income[j] = self.__check_index_error(report, condition7)
@@ -295,35 +295,18 @@ class Extract:
             # 종목이 가진 데이터길이 만큼 반복. 3부터 시작하는 이유는, 4개분기 데이터로 계산하는 데이터때문에.
             # 과거 데이터를 참조해야하는데, 최초 3개 데이터까지는 참조할 데이터가 없음.
             for i in range(3, len(df_finance)):
-                # PER : 시가총액 / 당기 순이익
-                df_finance.loc[i, "분기 PER"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3][three_indicators[2]] + df_finance.iloc[i - 2][three_indicators[2]] +
-                        df_finance.iloc[i - 1][three_indicators[2]] + df_finance.iloc[i][three_indicators[2]])
-
                 # PSR : 시가총액 / 매출액
-                df_finance.loc[i, "PSR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3][three_indicators[0]] + df_finance.iloc[i - 2][three_indicators[0]] +
-                        df_finance.iloc[i - 1][three_indicators[0]] + df_finance.iloc[i][three_indicators[0]])
-
+                df_finance.loc[i, "PSR"] = self.__calculate_quarter_data(i, df_finance, three_indicators[0])
                 # PGPR : 시가총액 / 매출총이익
-                df_finance.loc[i, "PGPR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['매출총이익'] + df_finance.iloc[i - 2]['매출총이익'] +
-                        df_finance.iloc[i - 1]['매출총이익'] + df_finance.iloc[i]['매출총이익'])
-
+                df_finance.loc[i, "PGPR"] = self.__calculate_quarter_data(i, df_finance, "매출총이익")
                 # POR : 시가총액 / 영업이익
-                df_finance.loc[i, "POR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3][three_indicators[1]] + df_finance.iloc[i - 2][three_indicators[1]] +
-                        df_finance.iloc[i - 1][three_indicators[1]] + df_finance.iloc[i][three_indicators[1]])
-
+                df_finance.loc[i, "POR"] = self.__calculate_quarter_data(i, df_finance, three_indicators[1])
+                # PER : 시가총액 / 당기 순이익
+                df_finance.loc[i, "분기 PER"] = self.__calculate_quarter_data(i, df_finance, three_indicators[2])
                 # PCR : 시가총액 / 영업활동 현금흐름
-                df_finance.loc[i, "PCR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['영업활동현금흐름'] + df_finance.iloc[i - 2]['영업활동현금흐름'] +
-                        df_finance.iloc[i - 1]['영업활동현금흐름'] + df_finance.iloc[i]['영업활동현금흐름'])
-
+                df_finance.loc[i, "PCR"] = self.__calculate_quarter_data(i, df_finance, "영업활동현금흐름")
                 # PFCR : 시가총액 / 잉여현금 흐름
-                df_finance.loc[i, "PFCR"] = df_finance.iloc[i]['시가총액'] / (
-                        df_finance.iloc[i - 3]['잉여현금흐름'] + df_finance.iloc[i - 2]['잉여현금흐름'] +
-                        df_finance.iloc[i - 1]['잉여현금흐름'] + df_finance.iloc[i]['잉여현금흐름'])
+                df_finance.loc[i, "PFCR"] = self.__calculate_quarter_data(i, df_finance, "잉여현금흐름")
 
                 # ROE : 당기순이익 / 자본총계
                 df_finance.loc[i, "분기 ROE"] = ((df_finance.iloc[i - 3][three_indicators[2]] +
@@ -457,3 +440,8 @@ class Extract:
             return -1
         except ValueError:
             return -1
+
+    def __calculate_quarter_data(self, index, df: pd.Dataframe, column_name):
+        return df.iloc[index]["시가총액"] / (
+                df.iloc[index - 3][column_name] + df.iloc[index - 2][column_name] +
+                df.iloc[index - 1][column_name] + df.iloc[index][column_name])
