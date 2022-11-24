@@ -1,8 +1,12 @@
 import datetime
 import pandas as pd
 import FinanceDataReader as fdr
+import pystocklib.srim as srim
+import filter_data
 
 from pykrx import stock
+
+
 
 
 class KoreanMarketFactorData:
@@ -24,6 +28,13 @@ class KoreanMarketFactorData:
         """
         return self.__get_fundamental_data("KOSDAQ")
 
+    def get_stock_ticker_and_name_list(self, market):
+
+        today = self.__get_date()
+
+        return filter_data.drop_column(self.__get_korean_stock_ticker_and_name(today, market))
+
+
     def __get_fundamental_data(self, market):
         """
          종목코드, 종목명, 업종, 시가총액, 거래량, 거래대금, BPS, PER, PBR, EPS, DIV, DPS가 담긴 데이터를 리턴.
@@ -31,14 +42,15 @@ class KoreanMarketFactorData:
          """
         today = self.__get_date()
 
-        stock_list = self.__get_korean_stock_ticker_and_name(today, market)
+        filtered_stock_ticker_and_name_list = filter_data.drop_column(self.__get_korean_stock_ticker_and_name(today, market))
         stock_cap = self.__get_fundamental_data_market_cap(today)
 
-        stock_list = pd.merge(stock_list, stock_cap, left_on="종목코드", right_on="종목코드")
+        temp_stock_list = pd.merge(filtered_stock_ticker_and_name_list, stock_cap, left_on="종목코드", right_on="종목코드")
         stock_fundamental = self.__get_korean_stock_fundamental(today, market)
 
+
         # 종목 코드로 조인
-        return pd.merge(stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
+        return pd.merge(temp_stock_list, stock_fundamental, left_on="종목코드", right_on="종목코드")
 
     def __get_fundamental_data_market_cap(self, today):
 
@@ -48,11 +60,10 @@ class KoreanMarketFactorData:
 
         return stock_list
 
-
     def __get_korean_stock_ticker_and_name(self, date, market):
         stock_list = pd.DataFrame({'종목코드': self.stock.get_market_ticker_list(date, market=market)})
         stock_list['종목명'] = stock_list['종목코드'].map(lambda x: stock.get_market_ticker_name(x))
-        stock_list['업종'] = stock_list['종목명'].map(lambda x: self.fdr_data[self.fdr_data["Name"]==x]["Sector"].iloc[0])
+        stock_list['업종'] = stock_list['종목명'].map(lambda x: self.fdr_data[self.fdr_data["Name"] == x]["Sector"].iloc[0])
 
         return stock_list
 
@@ -101,11 +112,4 @@ class KoreanMarketFactorData:
             date -= 3
 
         return year + month + str(date).zfill(2)
-        # return '20220504'
-
-
-
-
-
-
-
+        # return '20220930'
