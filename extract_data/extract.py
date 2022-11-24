@@ -22,6 +22,26 @@ class Extract:
             '11014',  # "3분기보고서":
             '11011'  # "사업보고서"
         ]
+        self.basic_columns = [
+            "종목코드",
+            "종목명",
+            "업종",
+            "종가",
+            "시가총액",
+            "거래량",
+            "거래대금",
+            "상장주식수",
+            "BPS",
+            "PER",
+            "PBR",
+            "EPS",
+            "DIV",
+            "DPS",
+            "average_roe",
+            "S-RIM 적정주가",
+            "S-RIM -10%",
+            "S-RIM -20%"
+        ]
 
         self.indicators = [
             '유동자산',
@@ -44,8 +64,18 @@ class Extract:
 
         df_kospi = self.factor_data.get_kospi_market_data()
         df_kosdaq = self.factor_data.get_kosdaq_market_data()
+        s_rim_data = self.__extract_s_rim_data()
 
-        return pd.concat([df_kospi, df_kosdaq])
+        df_kospi_kosdaq = self.__calculate_s_rim_data_per_marketcap(
+            pd.merge(
+                pd.concat([df_kospi, df_kosdaq]),
+                s_rim_data,
+                left_on="종목코드",
+                right_on="종목코드"
+            )
+        )
+
+        return df_kospi_kosdaq[self.basic_columns]
 
     def extract_finance_data(self, finance_years, df):
         pd.set_option('display.max_columns', None)
