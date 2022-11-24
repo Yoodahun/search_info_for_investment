@@ -28,3 +28,5 @@ zope.interface==5.4.0
 pyOpenSSL==22.0.0
 ndg-httpsclient==0.5.1
 pyasn1==0.4.8
+pystocklib==0.0.5
+html5lib==1.1
