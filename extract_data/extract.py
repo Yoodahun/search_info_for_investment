@@ -445,3 +445,22 @@ class Extract:
         return df.iloc[index]["시가총액"] / (
                 df.iloc[index - 3][column_name] + df.iloc[index - 2][column_name] +
                 df.iloc[index - 1][column_name] + df.iloc[index][column_name])
+
+    def __extract_s_rim_data(self):
+
+        return pd.read_excel(
+            "crawling_data/net_worth_and_roe_list_for_s_rim.xlsx",
+            usecols=["종목코드", "net_worth", "average_roe", "s-rim_value_1", "s-rim_value_2", "s-rim_value_3"],
+            converters={"종목코드": str}
+        )
+
+    def __calculate_s_rim_data_per_marketcap(self, df_kospi_kosdaq: pd.DataFrame):
+        for i in range(len(df_kospi_kosdaq.index.values.tolist())):
+            df_kospi_kosdaq.loc[i, "S-RIM 적정주가"] = df_kospi_kosdaq.loc[i, "s-rim_value_1"] / df_kospi_kosdaq.loc[
+                i, "상장주식수"]
+            df_kospi_kosdaq.loc[i, "S-RIM -10%"] = df_kospi_kosdaq.loc[i, "s-rim_value_2"] / df_kospi_kosdaq.loc[
+                i, "상장주식수"]
+            df_kospi_kosdaq.loc[i, "S-RIM -20%"] = df_kospi_kosdaq.loc[i, "s-rim_value_3"] / df_kospi_kosdaq.loc[
+                i, "상장주식수"]
+
+        return df_kospi_kosdaq
