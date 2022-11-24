@@ -22,7 +22,7 @@ def filtering_data_that_market_cap_under(percent: float, data: pd.DataFrame):
     :return: DataFrame
     """
 
-    data = drop_column(data)
+    data = drop_volume(data)
     return data[data["시가총액"] <= data["시가총액"].quantile(q=percent)].sort_values(by=["시가총액"], ascending=True)
 
 
@@ -33,7 +33,7 @@ def filtering_low_per(sheet_name, df_copied: pd.DataFrame, all_data=False):
     :return:
     """
 
-    df = drop_column(df_copied)
+    df = drop_volume(df_copied)
     df = df[df["PER"] > 0]
 
     if all_data:
@@ -579,7 +579,7 @@ def drop_column(df: pd.DataFrame):
     )
     # 우선주 드랍
     df.drop(
-        df[df["종목명"].str.endswith(("우", "우B", "우C"))].index,
+        df[df["종목명"].str.endswith(("우", "우B", "우C", "(전환)"))].index,
         inplace=True
     )
 
@@ -589,6 +589,9 @@ def drop_column(df: pd.DataFrame):
         inplace=True
     )
 
+    return df
+
+def drop_volume(df: pd.DataFrame):
     # 직전 거래일의 거래량이 0인 경우는 어떠한 이유에서 거래정지가 되어있을 확률이 높음
     df = df[df["거래량"] > 0]
 
