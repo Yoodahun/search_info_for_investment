@@ -570,6 +570,41 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
                 drop=True)
             )
 
+def filtering_s_rim_disparity_all_data(sheet_name, df: pd.DataFrame):
+
+
+    df["S-RIM 괴리율"] = df["종가"] / df["S-RIM -20%"] * 100
+
+    return (sheet_name,
+            df.sort_values(by=["S-RIM 괴리율"], ascending=False).reset_index(drop=True)
+            )
+
+
+def filtering_s_rim_disparity_and_high_nav(sheet_name ,df: pd.DataFrame):
+    df.drop(
+        df[df["NCAV/MC"] <= 0.0].index,
+        inplace=True
+    )
+
+    df["연도"] = pd.to_datetime(df["연도"])
+
+    latest_date = df["연도"].max()
+
+    df = df[df["연도"]==latest_date]
+
+
+    df["S-RIM 괴리율"] = df["종가"] / df["S-RIM -20%"] * 100
+
+    df["NCAV/MC rank"] = df["NCAV/MC"].rank(ascending=False)
+    df["S-RIM 괴리율 rank"] = df["S-RIM 괴리율"].rank(ascending=True)
+
+    df["Total score"] = df["NCAV/MC rank"] + df["S-RIM 괴리율 rank"]
+
+    return (sheet_name,
+            df.sort_values(by=["Total score"], ascending=True).reset_index(drop=True)
+            )
+
+
 
 def drop_column(df: pd.DataFrame):
     # 스팩 주식 드랍
