@@ -471,7 +471,7 @@ class Extract:
         except ValueError:
             return -1
 
-    def __calculate_quarter_data(self, index, df: pd.Dataframe, column_name):
+    def __calculate_quarter_data(self, index, df: pd.DataFrame, column_name):
         return df.iloc[index]["시가총액"] / (
                 df.iloc[index - 3][column_name] + df.iloc[index - 2][column_name] +
                 df.iloc[index - 1][column_name] + df.iloc[index][column_name])
