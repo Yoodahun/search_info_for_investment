@@ -1,8 +1,8 @@
 import datetime
 import time
 
-import filter_data
-from extract_data.extract import Extract
+import stock.filter_data as filter_data
+from stock.extract_data.extract import Extract
 from export_data import ExportToData
 
 start = time.time()
@@ -18,7 +18,7 @@ print("--------------")
 # extract and calculating finance data recent 3 years data
 extracted_data = extractor.extract_finance_data(
     [2020, 2021, 2022],
-    filter_data.filtering_data_that_market_cap_under(0.4,
+    filter_data.filtering_data_that_market_cap_under(0.32,
         kospi_kosdaq_data
     ))
 

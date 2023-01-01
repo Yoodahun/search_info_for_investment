@@ -1,13 +1,12 @@
 import datetime
 import time
-import filter_data
-from extract_data.extract import Extract
+from stock.extract_data.extract import Extract
 import pandas as pd
 import pystocklib.srim as srim
 from export_data import ExportToData
 
 
-def calcuale_company_value(net_worth, roe, k, discount_roe=1.0):
+def calculate_company_value(net_worth, roe, k, discount_roe=1.0):
     if discount_roe == 1.0:
         value = net_worth + (net_worth * (roe - k)) / k
     else:
@@ -34,6 +33,7 @@ for i in range(len(net_worth_and_roe_list)):
     print(f'{net_worth_and_roe_list.loc[i, "종목코드"]}, {i+1}/{len(net_worth_and_roe_list.index.values.tolist())}')
 
     s_rim_values = []
+
     try:
         net_worth = srim.reader.get_net_worth(net_worth_and_roe_list.loc[i, "종목코드"])
     except:
@@ -45,7 +45,7 @@ for i in range(len(net_worth_and_roe_list)):
         roe = 0
 
     for discount_roe in require_rate_of_return:
-        s_rim_values.append(calcuale_company_value(net_worth, roe, 10, discount_roe))
+        s_rim_values.append(calculate_company_value(net_worth, roe, 10, discount_roe))
 
     net_worth_and_roe_list.loc[i, "net_worth"] = net_worth
     net_worth_and_roe_list.loc[i, "average_roe"] = roe

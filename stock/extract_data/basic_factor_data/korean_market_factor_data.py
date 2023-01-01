@@ -1,8 +1,7 @@
 import datetime
 import pandas as pd
 import FinanceDataReader as fdr
-import pystocklib.srim as srim
-import filter_data
+import stock.filter_data as filter_data
 
 from pykrx import stock
 

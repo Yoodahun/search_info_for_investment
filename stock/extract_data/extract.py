@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 from requests.exceptions import SSLError
 
-import extract_data.krx_condition as CONDITION
+import stock.extract_data.krx_condition as CONDITION
 from .basic_factor_data.korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
 from config.api_key import OPEN_DART_KEY
@@ -138,9 +138,9 @@ class Extract:
 
             # 각 분기별 재무제표를 불러올때, 아직 안나왔다면 그냥 재무제표계산을 중단하기.
             if year == today.year:
-                if report_name == "11012" and today.month <= 7:  # 2분기
+                if report_name == "11012" and today.month < 7:  # 2분기
                     break
-                if report_name == "11014" and today.month <= 11:  # 3분기
+                if report_name == "11014" and today.month < 11:  # 3분기
                     break
                 if report_name == "11011" and today.month <= 12:  # 4분기
                     break
@@ -479,7 +479,7 @@ class Extract:
     def __extract_s_rim_data(self):
 
         return pd.read_excel(
-            "crawling_data/net_worth_and_roe_list_for_s_rim.xlsx",
+            "stock/crawling_data/net_worth_and_roe_list_for_s_rim.xlsx",
             usecols=["종목코드", "net_worth", "average_roe", "s-rim_value_1", "s-rim_value_2", "s-rim_value_3"],
             converters={"종목코드": str}
         )

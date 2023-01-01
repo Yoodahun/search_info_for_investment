@@ -1,7 +1,7 @@
 import datetime
 import time
-import filter_data
-from extract_data.extract import Extract
+import stock.filter_data as filter_data
+from stock.extract_data.extract import Extract
 from export_data import ExportToData
 
 start = time.time()
