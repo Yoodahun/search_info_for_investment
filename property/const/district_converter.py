@@ -10,7 +10,6 @@ class DistrictConverter:
     def __init__(self):
         self.districts = self.__read_district_file()
 
-
     def __read_district_file(self):
         _path = os.path.dirname(__file__)
         _project_root_path = os.path.dirname(_path)
@@ -32,23 +31,17 @@ class DistrictConverter:
             if si_do_name in district["si_do_name"]:
                 return district["si_do_code"]
 
-    def get_sigungu_list(self, si_do_code):
+    def get_sigungu(self, si_do_code):
         for district in self.districts:
             if si_do_code in district["si_do_code"]:
                 return district["sigungu"]
 
-
-
-    def get_sigungu_code(self, si_do_code, sigungu_name):
-        list = self.get_sigungu_list(si_do_code)
+    def get_sigungu_list(self, si_do_code, sigungu_name):
         sigungu_list = []
-        for sigungu in list:
+        sigungu_data = self.get_sigungu(si_do_code)
+        for sigungu in sigungu_data:
             if sigungu_name in sigungu["sigungu_name"]:
-                sigungu_list.append(sigungu["sigungu_code"])
+                sigungu_list.append(sigungu)
 
         return sigungu_list
-
-
-
-
 
