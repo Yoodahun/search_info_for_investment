@@ -12,6 +12,7 @@ class ExportToData:
         file.to_excel(writer, sheet_name=sheet_name)
 
         writer.save()
+        print("Export complete.")
 
     def export_to_excel_with_many_sheets(self, file_path, files: array):
         print("Exporting result to excel file.....")
@@ -21,3 +22,4 @@ class ExportToData:
             file.to_excel(writer, sheet_name=sheet_name)
 
         writer.save()
+        print("Export complete.")
