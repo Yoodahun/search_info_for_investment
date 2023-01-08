@@ -16,13 +16,15 @@ header = [
     "건축년도",
     "전용면적",
     "전용면적(평)",
-    "거래년",
+    "거래년도",
     "거래월",
     "거래일",
     "거래금액",
     "일련번호",
     "거래유형",
-    "중개사소재지"
+    "중개사소재지",
+    "해제여부",
+    "해제사유발생일"
 
 ]
 
@@ -78,7 +80,7 @@ def get_data_using_sigungu_list(si_do_name, sigungu_list: list, product, transac
 
     df = caculate_column_data(df)
 
-    df.rename(columns={"년": "거래년",
+    df.rename(columns={"년": "거래년도",
                        "월": "거래월",
                        "일": "거래일"
                        },
