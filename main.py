@@ -16,9 +16,15 @@ kospi_kosdaq_data = extractor.get_data()
 print("--------------")
 
 # extract and calculating finance data recent 3 years data
+# extracted_data = extractor.extract_finance_data(
+#     [2020, 2021, 2022],
+#     filter_data.filtering_data_that_market_cap_under(0.32,
+#         kospi_kosdaq_data
+#     ))
+
 extracted_data = extractor.extract_finance_data(
     [2020, 2021, 2022],
-    filter_data.filtering_data_that_market_cap_under(0.32,
+    filter_data.filtering_data_that_market_cap_greater_than(0.8,
         kospi_kosdaq_data
     ))
 
