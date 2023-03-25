@@ -26,6 +26,18 @@ def filtering_data_that_market_cap_under(percent: float, data: pd.DataFrame):
     return data[data["시가총액"] <= data["시가총액"].quantile(q=percent)].sort_values(by=["시가총액"], ascending=True)
 
 
+def filtering_data_that_market_cap_greater_than(percent: float, data: pd.DataFrame):
+    """
+    코스피, 코스닥의 종목에서 시가총액 특정 퍼센테이지 이상의 종목으로 필터함.
+    이 때, 기업소재지가 외국, 스팩주, 우선주, 최신거래일에 거래량이 0인 종목은 제거함.
+    :param data:
+    :return: DataFrame
+    """
+
+    data = drop_volume(data)
+    return data[data["시가총액"] > data["시가총액"].quantile(q=percent)].sort_values(by=["시가총액"], ascending=True)
+
+
 def filtering_low_per(sheet_name, df_copied: pd.DataFrame, all_data=False):
     """
     전체 데이터중 조회시점을 기준으로 PER가 10 이하인 기업.
@@ -41,7 +53,7 @@ def filtering_low_per(sheet_name, df_copied: pd.DataFrame, all_data=False):
                 df[df["PER"] <= 10.0].sort_values(by=["PER"], ascending=[True]))
     else:
         return (sheet_name,
-            df[df["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
+                df[df["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
 
 
 def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFrame, all_data=False):
@@ -376,8 +388,6 @@ def filtering_value_factor3(sheet_name, df: pd.DataFrame):
         inplace=True
     )
 
-
-
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)  # 기업 가치
     df["PSR rank"] = df.groupby("연도")["PSR"].rank(ascending=True)  # 매출
     df["PGPR rank"] = df.groupby("연도")["PGPR"].rank(ascending=True)  # 매출총이익
@@ -417,7 +427,6 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
         df[df["PSR"] <= 0].index,
         inplace=True
     )
-
 
     df["PBR rank"] = df.groupby("연도")["PBR"].rank(ascending=True)
     df["PER rank"] = df.groupby("연도")["분기 PER"].rank(ascending=True)
@@ -546,7 +555,6 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     :return:
     """
 
-
     df.drop(
         df[df["PSR"] <= 0].index,
         inplace=True
@@ -561,7 +569,6 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
     df["POR rank"] = df.groupby("연도")["POR"].rank(ascending=True)
     df["PEG rank"] = df.groupby("연도")["분기 PEG"].rank(ascending=True)
 
-
     df["모멘텀 순위"] = (df["전년도 동기 대비 매출액 성장률 순위"] + df["전년도 동기 대비 영업이익 성장률 순위"] + df["전년도 동기 대비 당기순이익 성장률 순위"]
                     + df["PSR rank"] + df["PGPR rank"] + df["POR rank"] + df["PEG rank"]) / 7
 
@@ -570,9 +577,8 @@ def filtering_value_and_profit_momentum(sheet_name, df: pd.DataFrame):
                 drop=True)
             )
 
+
 def filtering_s_rim_disparity_all_data(sheet_name, df: pd.DataFrame):
-
-
     df["S-RIM 괴리율"] = df["종가"] / df["S-RIM -20%"] * 100
 
     return (sheet_name,
@@ -580,7 +586,7 @@ def filtering_s_rim_disparity_all_data(sheet_name, df: pd.DataFrame):
             )
 
 
-def filtering_s_rim_disparity_and_high_nav(sheet_name ,df: pd.DataFrame):
+def filtering_s_rim_disparity_and_high_nav(sheet_name, df: pd.DataFrame):
     df.drop(
         df[df["NCAV/MC"] <= 0.0].index,
         inplace=True
@@ -590,8 +596,7 @@ def filtering_s_rim_disparity_and_high_nav(sheet_name ,df: pd.DataFrame):
 
     latest_date = df["연도"].max()
 
-    df = df[df["연도"]==latest_date]
-
+    df = df[df["연도"] == latest_date]
 
     df["S-RIM 괴리율"] = df["종가"] / df["S-RIM -20%"] * 100
 
@@ -603,7 +608,6 @@ def filtering_s_rim_disparity_and_high_nav(sheet_name ,df: pd.DataFrame):
     return (sheet_name,
             df.sort_values(by=["Total score"], ascending=True).reset_index(drop=True)
             )
-
 
 
 def drop_column(df: pd.DataFrame):
@@ -625,6 +629,7 @@ def drop_column(df: pd.DataFrame):
     )
 
     return df
+
 
 def drop_volume(df: pd.DataFrame):
     # 직전 거래일의 거래량이 0인 경우는 어떠한 이유에서 거래정지가 되어있을 확률이 높음
