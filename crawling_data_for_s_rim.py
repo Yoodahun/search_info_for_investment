@@ -49,12 +49,12 @@ for i in range(len(net_worth_and_roe_list)):
 
     net_worth_and_roe_list.loc[i, "net_worth"] = net_worth
     net_worth_and_roe_list.loc[i, "average_roe"] = roe
-    net_worth_and_roe_list.loc[i, "s-rim_value"] = s_rim_values[0]
-    net_worth_and_roe_list.loc[i, "s-rim_value_0.9"] = s_rim_values[1]
-    net_worth_and_roe_list.loc[i, "s-rim_value_0.8"] = s_rim_values[2]
+    net_worth_and_roe_list.loc[i, "s-rim_value_1"] = s_rim_values[0]
+    net_worth_and_roe_list.loc[i, "s-rim_value_2"] = s_rim_values[1]
+    net_worth_and_roe_list.loc[i, "s-rim_value_3"] = s_rim_values[2]
 
 exporter.export_to_excel(
-    "crawling_data/net_worth_and_roe_list_for_s_rim.xlsx",
+    "stock/crawling_data/net_worth_and_roe_list_for_s_rim.xlsx",
     "s_rim",
     net_worth_and_roe_list
 )
