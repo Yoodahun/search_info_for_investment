@@ -622,12 +622,6 @@ def drop_column(df: pd.DataFrame):
         inplace=True
     )
 
-    # 지주사 드랍
-    df.drop(
-        df[df["종목명"].str.endswith(("홀딩스", "지주", "지주회사"))].index,
-        inplace=True
-    )
-
     return df
 
 
