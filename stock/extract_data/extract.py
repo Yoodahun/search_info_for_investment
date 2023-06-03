@@ -56,7 +56,7 @@ class Extract:
             '잉여현금흐름'
         ]
 
-        self.financial_column_header = ["종목코드", "연도", "시가총액", "분기"] + self.indicators
+        self.financial_column_header = ["종목코드", "연도", "시가총액", "분기"] + self.indicators + ["주당배당금"]
 
     def get_data(self):
         print(f"Getting data from KRX")
@@ -118,6 +118,7 @@ class Extract:
         fcf = [0, 0, 0, 0]  # 잉여현금흐름 : 영업활동의흐름 - 유형자산의 증가
 
         market_cap = [0, 0, 0, 0]  # 시가 총액
+        dps = [0,0,0,0] #주당배당금
         date_year = str(year)  # 년도 변수 지정
         quarter = 0  # 분기
 
@@ -269,6 +270,14 @@ class Extract:
                     print(market_cap_df)
                     market_cap[j] = 0
 
+                dps_for_stock = self.factor_data.stock.get_market_fundamental(date, date, stock_code)
+
+                try:
+                    dps[j] = dps_for_stock.loc[date_string]["DPS"]
+                except KeyError:
+                    dps[j] = 0
+
+
                 # TODO
                 # market_listed_shares[j] = market_cap_df.loc[path_string]["상장주식수"]
 
@@ -276,7 +285,8 @@ class Extract:
                 record = [stock_code, date_string, market_cap[j], quarter, current_assets[j], liabilities[j], equity[j],
                           total_assets[j],
                           revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],
-                          fcf[j]]
+                          fcf[j], dps[j]
+                          ]
 
             # 각 사업보고서별로 계산한 데이터들을 data 변수에 차곡차곡 넣는다.
             data.append(record)
@@ -422,6 +432,7 @@ class Extract:
                         '당기순이익률', three_qoq_growth_indicators[2], three_yoy_growth_indicators[2],
                         three_indicators_status[2]
                     ]
+                    + ['주당배당금']
 
         )
 
