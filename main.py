@@ -62,17 +62,21 @@ def main():
     print("--------------")
 
     # extract and calculating finance data recent 3 years data
-    extracted_data = extractor.extract_finance_data(
-        years,
-        filterging_data(choice, kospi_kosdaq_data)
-    )
 
     if choice == 1:
+        print("소형주 스크래핑을 시작합니다 -------")
+        extracted_data = extractor.extract_finance_data(
+            years,
+            filterging_data(1, kospi_kosdaq_data)
+        )
         export_data("소형주", kospi_kosdaq_data, extracted_data)
     else:
+        print("대형주 스크래핑을 시작합니다 -------")
+        extracted_data = extractor.extract_finance_data(
+            years,
+            filterging_data(2, kospi_kosdaq_data)
+        )
         export_data("대형주", kospi_kosdaq_data, extracted_data)
-
-
 
     end = time.time()
     sec = (end - start)
@@ -82,4 +86,4 @@ def main():
 
 
 if __name__ == "__main__":
-  main()
+    main()

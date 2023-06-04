@@ -16,11 +16,11 @@ print("--------------")
 
 # extract and calculating finance data recent 3 years data
 extracted_data = extractor.extract_finance_data(
-    [2020, 2021, 2022],
+    [2020, 2021, 2022, 2023],
     # [2022],
     filter_data.filtering_data_that_specific_data(
-        ['094970','332370', '086520'],
-        # ['086520'],
+        # ['316140', '086790', '017670'],
+        ['005930'],
         kospi_kosdaq_data
     ))
 
