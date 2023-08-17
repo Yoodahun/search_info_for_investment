@@ -1,6 +1,8 @@
-# Screening stock data using Python
+# Screening inventment data using Python
 
-파이썬과 몇몇 라이브러리를 이용하여 주식종목들을 추출한 뒤, 몇몇의 조건을 설정하여 스크리닝을 합니다.
+파이썬과 몇몇 라이브러리를 이용하여 아래의 정보들을 추출한 뒤, 몇몇의 조건을 설정하여 스크리닝을 합니다.
+- 부동산
+- 주식
 
 ## requirements.txt
 ```
@@ -38,9 +40,10 @@ pyasn1==0.4.8
 
 ## How to use
 
-아래 Velog 시리즈에서 작성과정 및 사용법들을 기재하고 있습니다.
+아래 Tistory 시리즈에서 작성과정 및 사용법들을 기재하고 있습니다.
 
-👉🏻 [뇌동매매를 막아주는 파이썬 종목 스크리닝](https://velog.io/@dahunyoo/series/%EB%87%8C%EB%8F%99%EB%A7%A4%EB%A7%A4%EB%A5%BC-%EB%A7%89%EC%95%84%EC%A3%BC%EB%8A%94-%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EC%A2%85%EB%AA%A9-%EC%8A%A4%ED%81%AC%EB%A6%AC%EB%8B%9D)
+👉🏻 [뇌동매매를 막아주는 파이썬 종목 스크리닝](https://drop-by-drop-fills-the-tub.tistory.com/category/%ED%8C%8C%EC%9D%B4%EC%8D%AC%EC%9C%BC%EB%A1%9C%20%EC%A2%85%EB%AA%A9%20%EC%8A%A4%ED%81%AC%EB%A6%AC%EB%84%88%20%EB%A7%8C%EB%93%A4%EA%B8%B0)
+👉🏻 [파이썬으로 부동산 매매가 조회기 만들기](https://drop-by-drop-fills-the-tub.tistory.com/category/%ED%8C%8C%EC%9D%B4%EC%8D%AC%EC%9C%BC%EB%A1%9C%20%EB%B6%80%EB%8F%99%EC%82%B0%20%EB%A7%A4%EB%A7%A4%EA%B0%80%20%EC%A1%B0%ED%9A%8C%EA%B8%B0%20%EB%A7%8C%EB%93%A4%EA%B8%B0)
 
 ### OpenDart API Key
 config 아래에 `api_key.py` 를 생성하신 후, API Key의 설정이 필요합니다.
@@ -48,6 +51,13 @@ config 아래에 `api_key.py` 를 생성하신 후, API Key의 설정이 필요�
 OPEN_DART_KEY = {YOUR_OPEN_DART_KEY}
 ```
 키의 발급은 [OpenDart](https://opendart.fss.or.kr) 에서 발급하시면 됩니다.
+
+### data.go API Key
+config 아래에 `api_key.py` 를 생성하신 후, API Key의 설정이 필요합니다.
+```
+PUBLIC_DATA_PORTAL = {YOUR_PUBLIC_DATA_PORTAL}
+```
+
 
 
 ### Export screening file
