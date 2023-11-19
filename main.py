@@ -19,7 +19,7 @@ def export_data(category, raw_data, extracted_data):
     exporter = ExportToData()
 
     exporter.export_to_excel_with_many_sheets(
-        f"/Users/yoodahun/Documents/Dahun Document/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_{category}_screeningData.xlsx",
+        f"/Users/yoodahun/Documents/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_{category}_screeningData.xlsx",
         [
             filter_data.filtering_low_per("ALL_DATA_저PER", raw_data.copy(), True),
             filter_data.filtering_low_pbr_and_per("ALL_DATA_저PBR_저PER", 1.0, 10, raw_data.copy(), True),

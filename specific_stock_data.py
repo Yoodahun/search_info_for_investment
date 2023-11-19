@@ -16,16 +16,26 @@ print("--------------")
 
 # extract and calculating finance data recent 3 years data
 extracted_data = extractor.extract_finance_data(
-    [2020, 2021, 2022, 2023],
+    [2021, 2022, 2023],
     # [2022],
-    filter_data.filtering_data_that_specific_data(
-        # ['316140', '086790', '017670'],
-        ['005930'],
+    filter_data.filtering_data_that_specific_data([
+    '001800',
+    '001940',
+    '002030',
+    '007860',
+    '009300',
+    '009970',
+    '017940',
+    '023910',
+    '054040',
+    '096760',
+'328130'
+    ],
         kospi_kosdaq_data
     ))
 
 exporter.export_to_excel(
-    f"/Users/yoodahun/Documents/Dahun Document/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_specific_data.xlsx",
+    f"/Users/yoodahun/Documents/Investment information/{datetime.datetime.today().strftime('%Y%m%d')}_specific_data.xlsx",
     "specific_data",
     extracted_data
 )
