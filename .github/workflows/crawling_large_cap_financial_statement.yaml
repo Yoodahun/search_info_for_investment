@@ -1,0 +1,35 @@
+name: 국내 대형주 시가총액 상위 20% 재무제표 크롤링해서 엑셀파일로 내보내기하기
+
+on:
+  workflow_dispatch:
+
+env:
+  IS_GITHUB_ACTION: True
+  OPEN_DART_KEY: ${{ secrets.OPEN_DART_KEY }}
+
+
+jobs:
+  crawling_large_cap_financial_statement:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run kor_price.py
+        run: python crawling_large_cap_financial_statement.py
+
+      - name: report upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: financial report
+          path: /results
