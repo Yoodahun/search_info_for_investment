@@ -16,6 +16,7 @@ def calculate_company_value(net_worth, roe, k, discount_roe=1.0):
 
     return value
 
+
 start = time.time()
 extractor = Extract()
 exporter = ExportToData()
@@ -30,7 +31,7 @@ net_worth_and_roe_list.reset_index(drop=True, inplace=True)
 require_rate_of_return = [1.0, 0.9, 0.8]
 
 for i in range(len(net_worth_and_roe_list)):
-    print(f'{net_worth_and_roe_list.loc[i, "종목코드"]}, {i+1}/{len(net_worth_and_roe_list.index.values.tolist())}')
+    print(f'{net_worth_and_roe_list.loc[i, "종목코드"]}, {i + 1}/{len(net_worth_and_roe_list.index.values.tolist())}')
 
     s_rim_values = []
 
@@ -58,7 +59,6 @@ exporter.export_to_excel(
     "s_rim",
     net_worth_and_roe_list
 )
-
 
 end = time.time()
 sec = (end - start)
