@@ -52,8 +52,11 @@ def filtering_low_per(sheet_name, df_copied: pd.DataFrame, all_data=False):
         return (sheet_name,
                 df[df["PER"] <= 10.0].sort_values(by=["PER"], ascending=[True]))
     else:
+
+        df2 = filter_date(df)
+
         return (sheet_name,
-                df[df["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
+                df2[df2["PER"] <= 10.0].sort_values(by=["연도", "PER"], ascending=[False, True]))
 
 
 def filtering_low_pbr_and_per(sheet_name, pbr: float, per: float, df: pd.DataFrame, all_data=False):
@@ -268,6 +271,12 @@ def filtering_value_factor(sheet_name, df: pd.DataFrame):
 
     df["4 Total Value score"] = df["PBR rank"] + df["PER rank"] + df["PCR rank"] + df["PSR rank"]
 
+    df["연도"] = pd.to_datetime(df["연도"])
+
+    latest_date = df["연도"].max()
+
+    df = df[df["연도"] == latest_date]
+
     return (sheet_name,
             df.sort_values(by=['연도', '4 Total Value score'], ascending=[False, True]).reset_index(
                 drop=True)
@@ -346,6 +355,12 @@ def filtering_value_factor2(sheet_name, df: pd.DataFrame):
         df["PGPR rank"] + \
         df["YoY 영업이익 증가율 rank"] + \
         df["YoY 당기순이익 증가율 rank"]
+
+    df["연도"] = pd.to_datetime(df["연도"])
+
+    latest_date = df["연도"].max()
+
+    df = df[df["연도"] == latest_date]
 
     return (sheet_name,
             df.sort_values(by=['연도', 'Total Value score'], ascending=[False, True]).reset_index(
@@ -587,16 +602,18 @@ def filtering_s_rim_disparity_all_data(sheet_name, df: pd.DataFrame):
 
 
 def filtering_s_rim_disparity_and_high_nav(sheet_name, df: pd.DataFrame):
+    """
+    S-RIM 괴리율 & High nav
+    :param sheet_name:
+    :param df:
+    :return:
+    """
     df.drop(
         df[df["NCAV/MC"] <= 0.0].index,
         inplace=True
     )
 
-    df["연도"] = pd.to_datetime(df["연도"])
-
-    latest_date = df["연도"].max()
-
-    df = df[df["연도"] == latest_date]
+    df = filter_date(df)
 
     df["S-RIM 괴리율"] = df["종가"] / df["S-RIM -20%"] * 100
 
@@ -630,3 +647,11 @@ def drop_volume(df: pd.DataFrame):
     df = df[df["거래량"] > 0]
 
     return df
+
+
+def filter_date(df: pd.DataFrame):
+    df["연도"] = pd.to_datetime(df["연도"])
+
+    latest_date = df["연도"].max()
+
+    return df[df["연도"] == latest_date]
