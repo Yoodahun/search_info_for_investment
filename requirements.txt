@@ -14,7 +14,7 @@ certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.12
 comm==0.1.2
-cryptography==37.0.2
+cryptography==42.0.5
 DateTime==4.4
 debugpy==1.6.4
 decorator==5.1.1
@@ -86,7 +86,7 @@ pyasn1==0.4.8
 pycparser==2.21
 Pygments==2.14.0
 pykrx==1.0.32
-pyOpenSSL==22.0.0
+pyOpenSSL==24.1.0
 pyrsistent==0.19.3
 pystocklib==0.0.5
 python-dateutil==2.8.2
