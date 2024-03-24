@@ -9,7 +9,7 @@ from pykrx import stock
 class KoreanMarketFactorData:
     def __init__(self):
         self.stock = stock
-        self.fdr_data = fdr.StockListing("KRX")
+        self.fdr_data = fdr.StockListing("KRX-DESC")
 
     def get_kospi_market_data(self):
         """
@@ -119,6 +119,6 @@ class KoreanMarketFactorData:
             date -= 3
 
         # print(year + month + str(date).zfill(2))
-        return '20230927'
-        # return year + month + str(date).zfill(2)
+        # return '20230927'
+        return year + month + str(date).zfill(2)
         # return '20220930'
