@@ -1,21 +1,23 @@
 import time
+import traceback
 from datetime import datetime
 
 import numpy as np
 from requests.exceptions import SSLError
+from tqdm import tqdm
 
 import stock.extract_data.krx_condition as CONDITION
 from .basic_factor_data.korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
-from config.api_key import OPEN_DART_KEY
 import pandas as pd
+from config.utilities import get_api_key
 
 
 class Extract:
 
     def __init__(self):
         self.factor_data = KoreanMarketFactorData()
-        self.dart = OpenDartReader(OPEN_DART_KEY)  # config/api_key.py에서 api key의 설정이 필요함.
+        self.dart = OpenDartReader(get_api_key("OPEN_DART_KEY"))  # config/api_key.py에서 api key의 설정이 필요함.
         self.report_code = [
             '11013',  # "1분기보고서":
             '11012',  # "반기보고서":
@@ -85,7 +87,7 @@ class Extract:
         data = []
 
         count = 1
-        for row in df.itertuples():
+        for row in tqdm(df.itertuples()) :
             print(f"extracting {count}/{len(df)} {row[2]}...")
             count += 1
             for year in finance_years:
